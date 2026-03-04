@@ -1,0 +1,18 @@
+body{
+    background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container-sm {
+    max-width: 450px; /* Esto hace que la caja no sea gigante */
+    width: 100%;
+}
+
+.card {
+    border: none;
+    border-radius: 15px; /* Bordes más redondeados para suavidad */
+}
