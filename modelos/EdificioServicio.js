@@ -1,5 +1,5 @@
-import { Edificio } from "./Edificio";
-import { TipoServicio } from "./Enums";
+import { Edificio } from "./Edificio.js";
+import { TipoServicio } from "./Enums.js";
 
 class EdificioServicio extends Edificio {
     #tipo;

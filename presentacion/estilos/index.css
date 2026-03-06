@@ -1,0 +1,12 @@
+.mapa{
+    display: grid;
+    gap: 1px;
+    background-color: #444;
+}
+
+.celda{
+    width: 30px;
+    height: 30px;
+    background-color: #e5e5e5;
+    border: 1px solid #ccc;
+}

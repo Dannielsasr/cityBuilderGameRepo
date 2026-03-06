@@ -1,6 +1,6 @@
-import { Mapa } from "./Mapa";
-import { Economia } from "./Economia";
-import { Ciudadano } from "./Ciudadano";
+import { Mapa } from "./Mapa.js";
+import { Economia } from "./Economia.js";
+import { Ciudadano } from "./Ciudadano.js";
 
 
 export class Ciudad {

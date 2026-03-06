@@ -1,6 +1,6 @@
-import { ElementoMapa } from "./ElementoMapa";
+import { ElementoMapa } from "./ElementoMapa.js";
 
-class Mapa{
+export class Mapa{
 
     #ancho;
     #largo;
@@ -11,7 +11,7 @@ class Mapa{
         this.largo = largo;
         
         //crea un arreglo bidimensional alto * ancho relleno de null
-        this.celdas = Array.from({ length: alto }, () =>
+        this.#celdas = Array.from({ length: largo }, () =>
             Array.from({ length: ancho }, () => null)
         );
     }
@@ -25,15 +25,15 @@ class Mapa{
     }
 
     set ancho(valor){
-        if(valor >= 13){
-            throw new Error("El ancho debe de ser mayor que 12");
+        if(valor < 15 || valor > 30){
+            throw new Error("El ancho esta fuera de rango");
         }
         this.#ancho = valor;
     }
 
     set largo(valor){
-        if(valor >= 13){
-            throw new Error("El largo debe de ser mayor que 12");
+        if(valor < 15 || valor > 30){
+            throw new Error("El largo esta fuera de rango");
         }
         this.#largo = valor;
     }
@@ -66,5 +66,9 @@ class Mapa{
         if (x < 0 || x >= this.#ancho || y < 0 || y >= this.#largo) {
             throw new Error("Coordenadas fuera del mapa");
         }
+    }
+
+    get celdas(){
+        return [...this.#celdas];
     }
 }

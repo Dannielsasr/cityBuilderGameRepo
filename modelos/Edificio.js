@@ -1,4 +1,4 @@
-import { ElementoMapa } from "./ElementoMapa";
+import { ElementoMapa } from "./ElementoMapa.js";
 
 export class Edificio extends ElementoMapa{
 

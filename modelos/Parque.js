@@ -1,4 +1,4 @@
-import { ElementoMapa } from "./ElementoMapa";
+import { ElementoMapa } from "./ElementoMapa.js";
 
 class Parque extends ElementoMapa{
     #bonoFelicidad = 5; //es constante

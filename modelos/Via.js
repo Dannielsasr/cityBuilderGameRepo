@@ -1,4 +1,4 @@
-import { ElementoMapa } from "./ElementoMapa";
+import { ElementoMapa } from "./ElementoMapa.js";
 
 class Via extends ElementoMapa{
     constructor(id) {

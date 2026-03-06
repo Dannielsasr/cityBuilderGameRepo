@@ -1,5 +1,5 @@
-import { Productivo } from "./Productivo";
-import { EdificioResidencial } from "./EdificioResidencial";
+import { Productivo } from "./Productivo.js";
+import { EdificioResidencial } from "./EdificioResidencial.js";
 
 export class Ciudadano{
 

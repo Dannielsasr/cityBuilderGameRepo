@@ -1,5 +1,5 @@
-import { TipoEstado } from "./Enums";
-import { Ciudad } from "./Ciudad";
+import { TipoEstado } from "./Enums.js";
+import { Ciudad } from "./Ciudad.js";
 
 class Juego{
 

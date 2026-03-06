@@ -1,5 +1,5 @@
-import { Productivo } from "./Productivo";
-import { TipoComercial } from "./Enums";
+import { Productivo } from "./Productivo.js";
+import { TipoComercial } from "./Enums.js";
 
 class EdificioComercial extends Productivo {
     #tipo;

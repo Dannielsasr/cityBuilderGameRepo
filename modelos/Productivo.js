@@ -1,4 +1,4 @@
-import { Edificio } from "./Edificio";
+import { Edificio } from "./Edificio.js";
 
 export class Productivo extends Edificio{
     #empleados;
