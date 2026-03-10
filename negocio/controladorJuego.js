@@ -3,13 +3,16 @@ import { Ciudad } from "../modelos/Ciudad.js";
 import { Mapa } from "../modelos/Mapa.js";
 import { Economia } from "../modelos/Economia.js";
 import { Via } from "../modelos/Via.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 
 const btnConstruirVia =  document.getElementById("btnConstruirVia");
 const btnDemoler =  document.getElementById("btnDemoler");
 const mapaDiv = document.getElementById("mapa");
+const nombreCiudadTitulo = document.getElementById("nombreCiudad");
 
 
 let juego;
+const ciudadRepository = new CiudadRepository();
 
 window.addEventListener("DOMContentLoaded", iniciarJuego);
 
@@ -109,8 +112,20 @@ function construirVia(event) {
 
 //guarda la ciudad actualizada en local storage, se llama cada vez que se realiza una acción que modifica el estado de la ciudad, como construir o demoler edificios..
 function guardarCiudad(){
+    const dataGuardada = ciudadRepository.obtenerConfiguracionInicial();
+
+    if (dataGuardada && dataGuardada.ciudad) {
+        dataGuardada.ciudad.mapa.celdas = juego.ciudad.mapa.celdas;
+        dataGuardada.ciudad.recursosIniciales = juego.ciudad.economia.toJSON();
+        dataGuardada.ciudad.poblacion = juego.ciudad.ciudadanos.length;
+
+        ciudadRepository.guardarConfiguracion(dataGuardada);
+    }
 
     const idCiudad = localStorage.getItem("ciudadActual");
+    if (!idCiudad) {
+        return;
+    }
 
     const dataCiudad = {
         idCiudad: juego.ciudad.idCiudad,

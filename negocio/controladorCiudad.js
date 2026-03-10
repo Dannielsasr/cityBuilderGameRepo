@@ -1,6 +1,9 @@
 import { Ciudad } from "../modelos/Ciudad.js";
 import { Mapa } from "../modelos/Mapa.js";
 import { Economia } from "../modelos/Economia.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
+
+const ciudadRepository = new CiudadRepository();
 
 document.querySelector("#toLoadFile").addEventListener("click", function(){
     //verificar que el archivo es de tipo .txt
@@ -19,6 +22,24 @@ document.querySelector("form").addEventListener("submit", function(e){
     //el valor de la region es un entero (modificable)
     const region = document.getElementById("selectRegion").value;
     const tamanoMapa = document.getElementById("selectTamano").value;
+
+    try {
+        // Persistencia HU-1: configuracion inicial en clave unificada.
+        ciudadRepository.guardarConfiguracionInicial({
+            nombreCiudad: nombre,
+            nombreAlcalde: alcalde,
+            region,
+            tamanoMapa
+        });
+    } catch (error) {
+        const feedback = document.getElementById("formFeedback");
+        if (feedback) {
+            feedback.textContent = error.message;
+        } else {
+            alert(error.message);
+        }
+        return;
+    }
 
     const mapa = new Mapa( tamanoMapa, tamanoMapa);
 
