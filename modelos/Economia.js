@@ -62,4 +62,13 @@ export class Economia{
         }
         this.#alimento = alimento;
     }
+
+    toJSON() {
+        return {
+            dinero: this.dinero,
+            electricidad: this.electricidad,
+            agua: this.agua,
+            alimento: this.alimento
+        };
+    }
 }

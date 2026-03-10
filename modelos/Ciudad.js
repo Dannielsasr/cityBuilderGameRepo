@@ -4,18 +4,24 @@ import { Ciudadano } from "./Ciudadano.js";
 
 
 export class Ciudad {
+    #idCiudad;
     #nombre;
     #region;
     #mapa;
     #ciudadanos;
     #economia;
 
-    constructor({ nombre = "mi_Ciudad", region, mapa, economia }) {
+    constructor({ id = Date.now() + Math.random(), nombre = "mi_Ciudad", region, mapa, economia }) {
+        this.#idCiudad = id;
         this.nombre = nombre;
         this.region = region; //mediante API region
         this.mapa = mapa;
         this.economia = economia;
         this.#ciudadanos = [];
+    }
+
+    get idCiudad() {
+        return this.#idCiudad;
     }
 
     get nombre() {

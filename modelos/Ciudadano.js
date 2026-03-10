@@ -72,4 +72,14 @@ export class Ciudadano{
         }
         this.#empleo = empleo;
     }
+
+    toJSON() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            felicidad: this.felicidad,
+            vivienda: this.vivienda ? this.vivienda.id : null,
+            empleo: this.empleo ? this.empleo.id : null
+        };
+    }
 }

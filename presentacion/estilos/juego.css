@@ -24,3 +24,8 @@ body{
     align-items: center;
     justify-content: center;
 }
+
+.celda[subtype="r"]{
+    background-image: url("/textures/concreteTexture.webp");
+    background-size: cover;
+}

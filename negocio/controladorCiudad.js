@@ -27,17 +27,28 @@ document.querySelector("form").addEventListener("submit", function(e){
 
     const ciudad = new Ciudad({ nombre, region, mapa, economia});
 
-    console.log(ciudad.mapa.celdas)
-    console.log(ciudad.economia.dinero, ciudad.economia.electricidad, ciudad.economia.agua, ciudad.economia.alimento)
-    console.log(ciudad.ciudadanos)
+    const id = ciudad.idCiudad.toString();
 
-    //guardar en local storage
-    localStorage.setItem("ciudad", JSON.stringify({
-        nombre,
-        region,
-        tamanoMapa
-    }));
+    const dataCiudad = {
+        idCiudad: id,
+        nombre: ciudad.nombre,
+        region: ciudad.region,
+        mapa: ciudad.mapa,
+        economia: ciudad.economia,
+        ciudadanos: ciudad.ciudadanos
+    };
 
+    //guarda la data de ciudad
+    localStorage.setItem(id, JSON.stringify(dataCiudad));
+
+    // guardar lista de ciudades
+    let ciudades = JSON.parse(localStorage.getItem("ciudades")) || [];
+    ciudades.push(id);
+    localStorage.setItem("ciudades", JSON.stringify(ciudades));
+
+    // guardar ciudad actual
+    localStorage.setItem("ciudadActual", id);
+    
     window.location.href = "../vistas/juego.html";
 
     }); 

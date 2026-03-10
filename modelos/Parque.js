@@ -1,6 +1,6 @@
 import { ElementoMapa } from "./ElementoMapa.js";
 
-class Parque extends ElementoMapa{
+export class Parque extends ElementoMapa{
     #bonoFelicidad = 5; //es constante
 
     constructor(id) {
@@ -9,5 +9,15 @@ class Parque extends ElementoMapa{
 
     get bonoFelicidad() {
         return this.#bonoFelicidad;
+    }
+
+    toJSON() {
+        return {
+            id: this.id,
+            costo: this.costo,
+            costoMantenimiento: this.costoMantenimiento,
+            subtipo: this.subtipo,
+            bonoFelicidad: this.bonoFelicidad
+        };
     }
 }

@@ -79,6 +79,14 @@ export class Juego{
         this.#estado = valor
     }
 
-    //otros metodos de la clase...
+    toJSON() {
+        return {
+            ciudad: this.ciudad,
+            turnoActual: this.turnoActual,
+            estado: this.estado,
+            puntuacionAcumulada: this.puntuacionAcumulada,
+            tiempoPorTurno: this.tiempoPorTurno
+        };
+    }
 
 }

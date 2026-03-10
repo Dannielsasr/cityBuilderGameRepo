@@ -1,7 +1,7 @@
 import { Productivo } from "./Productivo.js";
 import { TipoIndustrial } from "./Enums.js";
 
-class EdificioIndustrial extends Productivo {
+export class EdificioIndustrial extends Productivo {
     #tipo;
 
     constructor(id, tipo) {

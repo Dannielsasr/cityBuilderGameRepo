@@ -71,4 +71,19 @@ export class Mapa{
     get celdas(){
         return [...this.#celdas];
     }
+
+    set celdas(valor){
+        if(!Array.isArray(valor) || valor.length !== this.#largo || valor.some(fila => !Array.isArray(fila) || fila.length !== this.#ancho)){
+            throw new Error("Celdas debe ser un arreglo bidimensional con las dimensiones del mapa");
+        }
+        this.#celdas = valor;
+    }
+
+    toJSON() {
+        return {
+            ancho: this.ancho,
+            largo: this.largo,
+            celdas: this.celdas
+        };
+    }
 }
