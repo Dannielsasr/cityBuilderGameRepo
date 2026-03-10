@@ -9,6 +9,82 @@
             <link rel="stylesheet" type="text/css" href="../estilos/juego.css">
         </head>
         <body>
+            <h3 id="nombreCiudad" class="text-center my-4"> Una ciudad </h3>
+            <div class="container-fluid d-flex mt-3">
+                <div class="col-auto me-4">
+                    <div class="card shadow-sm" style="width: 220px;">
+                        <div class="card-body">
+                            <button class="btn btn-primary w-100 mb-2" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#menuHerramientas">
+                                Herramientas
+                            </button>
+        
+                            <div class="collapse" id="menuHerramientas">
+                                <div class="d-grid gap-2 border-top pt-2">
+                                    
+                                    <button class="btn btn-outline-success" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#opcionesConstruir">
+                                        Construir
+                                    </button>
+        
+                                    <div class="collapse" id="opcionesConstruir">
+                                        <div class="d-grid gap-2 ms-2 border-start ps-2 my-2">
+                                            
+                                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tiposResidencia">Edificios residenciales</button>
+                                            <div class="collapse ms-2" id="tiposResidencia">
+                                                <div class="d-grid gap-1 py-1">
+                                                    <button class="btn btn-objeto border" id="itemCasa">Casa</button>
+                                                    <button class="btn btn-objeto border" id="itemApartamento">Apartamentos</button>
+                                                </div>
+                                            </div>
+        
+                                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoComercial">Edificios comercial</button>
+                                            <div class="collapse ms-2" id="tipoComercial">
+                                                <div class="d-grid gap-1 py-1">
+                                                    <button class="btn btn-objeto border" id="itemTienda">Tienda</button>
+                                                    <button class="btn btn-objeto border" id="itemMall">Centro comercial</button>
+                                                </div>
+                                            </div>
+        
+                                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoIndustrial">Edificios industrial</button>
+                                            <div class="collapse ms-2" id="tipoIndustrial">
+                                                <div class="d-grid gap-1 py-1">
+                                                    <button class="btn btn-objeto border" id="itemFabrica">Fabrica</button>
+                                                    <button class="btn btn-objeto border" id="itemGranja">Granja</button>
+                                                </div>
+                                            </div>
+        
+                                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoServicio">Edificios de servicios</button>
+                                            <div class="collapse ms-2" id="tipoServicio">
+                                                <div class="d-grid gap-1 py-1">
+                                                    <button class="btn btn-objeto border" id="itemPolicia">Policía</button>
+                                                    <button class="btn btn-objeto border" id="itemBomberos">Bomberos</button>
+                                                    <button class="btn btn-objeto border" id="itemHospital">Hospital</button>
+                                                </div>
+                                            </div>
+        
+                                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoUtilidad">Edificios de utilidad</button>
+                                            <div class="collapse ms-2" id="tipoUtilidad">
+                                                <div class="d-grid gap-1 py-1">
+                                                    <button class="btn btn-objeto border" id="itemPlanta">Planta electrica</button>
+                                                    <button class="btn btn-objeto border" id="itemAgua">Planta de agua</button>
+                                                </div>
+                                            </div>
+        
+                                            <button class="btn btn-sm btn-light border" id="itemParque">Parque</button>
+                                            <button class="btn btn-sm btn-light border" id="itemVia">Vía</button>
+                                        </div>
+                                    </div>
+        
+                                    <button class="btn btn-outline-danger" id="btnDestruir">
+                                        Destruir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <div id="grid-container" class="flex-grow-1 d-flex justify-content-center">
             <div class="button-container">
                 <button id="btnConstruirVia" class="btn btn-primary">Construir Via</button>
                 <button id="btnDemoler" class="btn btn-danger">Demoler</button>
@@ -18,7 +94,8 @@
             <div id="grid-container">
                 <div id="mapa" class="mapa"></div>
             </div>
-
+            
             <script type="module" src="../../negocio/controladorJuego.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         </body>
     </html>
