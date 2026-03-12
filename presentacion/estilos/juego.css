@@ -29,3 +29,17 @@ body{
     background-image: url("/textures/concreteTexture.webp");
     background-size: cover;
 }
+
+.celda[subtype="R1"]{
+    background-image: url("/textures/casa.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.celda[subtype="R2"]{
+    background-image: url("/textures/apartamento.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
