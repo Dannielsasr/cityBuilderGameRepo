@@ -1,5 +1,24 @@
 import { Juego } from "../modelos/Juego.js";
-import { TipoResidencial } from "../modelos/Enums.js";
+import { TipoResidencial, TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad } from "../modelos/Enums.js";
+
+
+const CONFIG_EDIFICIOS = {
+    R1: TipoResidencial.CASA,
+    R2: TipoResidencial.APARTAMENTO,
+
+    C1: TipoComercial.TIENDA,
+    C2: TipoComercial.CENTRO_COMERCIAL,
+
+    I1: TipoIndustrial.FABRICA,
+    I2: TipoIndustrial.GRANJA,
+
+    S1: TipoServicio.ESTACION_POLICIA,
+    S2: TipoServicio.ESTACION_BOMBEROS,
+    S3: TipoServicio.HOSPITAL,
+
+    U1: TipoUtilidad.PLANTA_ELECTRICA,
+    U2: TipoUtilidad.PLANTA_AGUA
+};
 
 export class SistemaTurnos {
 	#juego;
@@ -29,12 +48,6 @@ export class SistemaTurnos {
 		if (this.#intervalId !== null) {
 			return;
 		}
-		//esta parte es una prueba (BORRAR DESPUES)
-		this.#juego.ciudad.economia.electricidad = 100;
-		this.#juego.ciudad.economia.agua = 100;
-
-		console.log(this.#juego.ciudad.economia.electricidad,
-		this.#juego.ciudad.economia.agua);
 
 		this.#intervalId = setInterval(() => {
 			this.procesarTurno();
@@ -54,51 +67,103 @@ export class SistemaTurnos {
 		this.pausar();
 	}
 
-	procesarTurno() {
-		const {celdas} = this.#juego.ciudad.mapa;
-		const { economia } = this.#juego.ciudad;
+	procesarTurno(){
 
-		let casas = 0;
-		let apartamentos = 0;
+    const { celdas } = this.#juego.ciudad.mapa;
+    const { economia } = this.#juego.ciudad;
 
-		celdas.forEach((fila) => {
-			fila.forEach((celda) => {
-				if (celda === TipoResidencial.CASA.subtipo) {
-					casas += 1;
-				} else if (celda === TipoResidencial.APARTAMENTO.subtipo) {
-					apartamentos += 1;
+    let consumoElectricidad = 0;
+    let consumoAgua = 0;
+
+    let produccionElectricidad = 0;
+    let produccionAgua = 0;
+
+    let ingresoTotal = 0;
+    let beneficioFelicidadTotal = 0;
+
+	celdas.forEach(fila => {
+    fila.forEach(subtipo => {
+
+			if(subtipo === "P1"){
+				beneficioFelicidadTotal += 5;
+				return;
+			}
+
+			const tipo = CONFIG_EDIFICIOS[subtipo];
+			if(!tipo) return;
+
+			consumoElectricidad += tipo.consumoElectricidad || 0;
+			consumoAgua += tipo.consumoAgua || 0;
+
+			if(tipo.produccionPorTurno){
+
+				if(tipo.tipoProduccion === "ELECTRICIDAD"){
+					produccionElectricidad += tipo.produccionPorTurno;
 				}
-			});
+
+				if(tipo.tipoProduccion === "AGUA"){
+					produccionAgua += tipo.produccionPorTurno;
+				}
+
+				if(tipo.tipoProduccion === "DINERO"){
+					ingresoTotal += tipo.produccionPorTurno;
+				}
+
+				if(tipo.tipoProduccion === "ALIMENTOS"){
+					economia.alimentos += tipo.produccionPorTurno;
+				}
+
+			}
+
+			if(tipo.ingresoPorTurno){
+				ingresoTotal += tipo.ingresoPorTurno;
+			}
+
+			if(tipo.beneficioFelicidad){
+				beneficioFelicidadTotal += tipo.beneficioFelicidad;
+			}
+
 		});
+	});
 
-		const consumoTeoricoElectricidad =
-			casas * TipoResidencial.CASA.consumoElectricidad +
-			apartamentos * TipoResidencial.APARTAMENTO.consumoElectricidad;
+    economia.electricidad += produccionElectricidad;
+    economia.agua += produccionAgua;
+    economia.dinero += ingresoTotal;
 
-		const consumoTeoricoAgua =
-			casas * TipoResidencial.CASA.consumoAgua +
-			apartamentos * TipoResidencial.APARTAMENTO.consumoAgua;
+    const aplicadoElectricidad = Math.min(economia.electricidad, consumoElectricidad);
+    const aplicadoAgua = Math.min(economia.agua, consumoAgua);
 
-		const consumoAplicadoElectricidad = Math.min(
-			economia.electricidad,
-			consumoTeoricoElectricidad
-		);
+    economia.electricidad -= aplicadoElectricidad;
+    economia.agua -= aplicadoAgua;
 
-		const consumoAplicadoAgua = Math.min(
-			economia.agua,
-			consumoTeoricoAgua
-		);
+    this.aplicarFelicidadServicios(beneficioFelicidadTotal);
 
-		economia.electricidad -= consumoAplicadoElectricidad;
-		economia.agua -= consumoAplicadoAgua;
+    this.#onActualizacion({
+        consumoElectricidad,
+        consumoAgua,
+        produccionElectricidad,
+        produccionAgua,
+        ingresoTotal,
+        beneficioFelicidadTotal
+    });
 
-		this.#onActualizacion({
-			casas,
-			apartamentos,
-			consumoTeoricoElectricidad,
-			consumoTeoricoAgua,
-			consumoAplicadoElectricidad,
-			consumoAplicadoAgua
-		});
 	}
+
+
+	aplicarFelicidadServicios(beneficio){
+
+    if(!beneficio) return;
+
+    const { ciudadanos } = this.#juego.ciudad;
+
+    ciudadanos.forEach(ciudadano => {
+
+        const nuevaFelicidad = Math.min(
+            100,
+            ciudadano.felicidad + beneficio
+        );
+
+        ciudadano.felicidad = nuevaFelicidad;
+    });
+}
 }

@@ -3,9 +3,16 @@ import { Ciudad } from "../modelos/Ciudad.js";
 import { Mapa } from "../modelos/Mapa.js";
 import { Economia } from "../modelos/Economia.js";
 import { Via } from "../modelos/Via.js";
-import { TipoResidencial } from "../modelos/Enums.js";
+import { EdificioResidencial } from "../modelos/EdificioResidencial.js";
+import { EdificioComercial } from "../modelos/EdificioComercial.js";
+import { EdificioIndustrial } from "../modelos/EdificioIndustrial.js";
+import { EdificioServicio } from "../modelos/EdificioServicio.js";
+import { PlantaUtilidad } from "../modelos/PlantaUtilidad.js";
+import { Parque } from "../modelos/Parque.js";
 import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 import { SistemaTurnos } from "./SistemaTurnos.js";
+import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
+
 
 const btnCasa = document.getElementById("itemCasa");
 const btnApartamento = document.getElementById("itemApartamento");
@@ -30,7 +37,17 @@ const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
     VIA: "VIA",
     CASA: "CASA",
-    APARTAMENTO: "APARTAMENTO"
+    APARTAMENTO: "APARTAMENTO",
+    TIENDA: "TIENDA",
+    MALL: "MALL",
+    FABRICA: "FABRICA",
+    GRANJA: "GRANJA",
+    POLICIA: "POLICIA",
+    BOMBEROS: "BOMBEROS",
+    HOSPITAL: "HOSPITAL",
+    PLANTA_ELECTRICA: "PLANTA_ELECTRICA",
+    PLANTA_AGUA: "PLANTA_AGUA",
+    PARQUE: "PARQUE"
 });
 
 
@@ -41,6 +58,7 @@ const ciudadRepository = new CiudadRepository();
 
 window.addEventListener("DOMContentLoaded", iniciarJuego);
 
+//esta parte es para captar los eventos, en caso de que algun boton se oprima, se redirecciona.
 btnCasa?.addEventListener("click", function() {
     activarModoConstruccion(MODOS_CONSTRUCCION.CASA);
 });
@@ -53,11 +71,60 @@ btnVia?.addEventListener("click", function() {
     activarModoConstruccion(MODOS_CONSTRUCCION.VIA);
 });
 
+btnTienda?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.TIENDA);
+}
+);
+btnMall?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.MALL);
+}
+);
+btnFabrica?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.FABRICA);
+}
+);
+
+btnGranja?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.GRANJA);
+}
+);
+
+btnPolicia?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.POLICIA);
+}
+);
+
+btnBomberos?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.BOMBEROS);
+}
+);
+
+btnHospital?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.HOSPITAL);
+}
+);
+
+btnPlantaElectrica?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.PLANTA_ELECTRICA);
+}
+);
+
+btnPlantaAgua?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.PLANTA_AGUA);
+}
+);
+
+btnParque?.addEventListener("click", function() {
+    activarModoConstruccion(MODOS_CONSTRUCCION.PARQUE);
+}
+);
+
 btnDemoler?.addEventListener("click", function() {
     desactivarModoConstruccion();
 });
 
-mapaDiv?.addEventListener("click", manejarClickEnMapa);
+
+mapaDiv?.addEventListener("click", construirElemento);
 
 function iniciarJuego() {
     const idCiudad = localStorage.getItem("ciudadActual");
@@ -94,6 +161,7 @@ function renderizarCiudad() {
     mapaDiv.innerHTML = "";
 
     const { ciudad: { mapa: { celdas } } } = juego;
+    console.log("Renderizando ciudad con celdas:", celdas);
 
     const ancho = celdas[0].length;
     mapaDiv.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
@@ -105,6 +173,7 @@ function renderizarCiudad() {
             div.classList.add("celda");
             div.dataset.x = x;
             div.dataset.y = y;
+            console.log(`Renderizando celda en (${x}, ${y}) con valor:`, celda);
             div.setAttribute("subtype", celda);
 
             mapaDiv.appendChild(div);
@@ -114,6 +183,7 @@ function renderizarCiudad() {
     actualizarContadorResidenciales();
 }
 
+//settea el modo y cambia el aspecto del cursor
 function activarModoConstruccion(modo) {
     modoConstruccionActivo = modo;
     document.body.style.cursor = "crosshair";
@@ -124,64 +194,139 @@ function desactivarModoConstruccion() {
     document.body.style.cursor = "default";
 }
 
-function manejarClickEnMapa(event) {
+function construirElemento(event){
+
     if (!event.target.classList.contains("celda")) return;
 
-    if (modoConstruccionActivo === MODOS_CONSTRUCCION.NINGUNO) {
-        return;
-    }
-
-    if (modoConstruccionActivo === MODOS_CONSTRUCCION.VIA) {
-        construirVia(event);
-        return;
-    }
-
-    if (
-        modoConstruccionActivo === MODOS_CONSTRUCCION.CASA ||
-        modoConstruccionActivo === MODOS_CONSTRUCCION.APARTAMENTO
-    ) {
-        prepararConstruccionResidencial(event);
-    }
-}
-
-function prepararConstruccionResidencial(event) {
     const x = Number(event.target.dataset.x);
     const y = Number(event.target.dataset.y);
-    const tipoSeleccionado = modoConstruccionActivo;
-    const costo = obtenerCostoResidencialPorModo(tipoSeleccionado);
-    const subtipo = obtenerSubtipoResidencialPorModo(tipoSeleccionado);
-    const { economia } = juego.ciudad;
+
     const celdaActual = juego.ciudad.mapa.celdas[y][x];
 
-    if (!subtipo) {
-        alert("Tipo residencial invalido");
-        return;
-    }
-
     if (celdaActual !== "g") {
-        alert("No se puede construir: la celda ya esta ocupada");
+        alert("La celda ya está ocupada");
         return;
     }
 
-    if (economia.dinero < costo) {
-        alert("No hay dinero suficiente para construir este edificio residencial");
+    // casos especiales primero
+    if (modoConstruccionActivo === MODOS_CONSTRUCCION.VIA) {
+        construirVia(event, x, y);
         return;
     }
 
-    if (!tieneViaAdyacente(x, y)) {
-        alert("No se puede construir: debe existir una via adyacente");
+    if (modoConstruccionActivo === MODOS_CONSTRUCCION.PARQUE) {
+        construirParque(x, y);
         return;
     }
 
-    economia.dinero -= costo;
-    juego.ciudad.mapa.celdas[y][x] = subtipo;
+    const tipo = obtenerTipoPorModo(modoConstruccionActivo);
 
-    console.log(`Construido ${tipoSeleccionado} en (${x}, ${y}). Costo: ${costo}. Dinero restante: ${economia.dinero}`);
+    if(!tipo){
+        console.error("Modo sin tipo:", modoConstruccionActivo);
+        return;
+    }
+
+    const edificio = crearEdificio(Date.now() + Math.random(), tipo);
+
+    if(!edificio){
+        console.error("No se pudo crear edificio para tipo:", tipo);
+        return;
+    }
+
+    const { economia } = juego.ciudad;
+
+    if(economia.dinero < edificio.costo){
+        alert("No hay dinero suficiente");
+        return;
+    }
+
+    if(
+        (tipo === TipoResidencial.CASA || tipo === TipoResidencial.APARTAMENTO)
+        && !tieneViaAdyacente(x, y)
+    ){
+        alert("Debe existir una vía adyacente para construir un edificio residencial");
+        return;
+    }
+
+    economia.dinero -= edificio.costo;
+
+    juego.ciudad.mapa.celdas[y][x] = edificio.subtipo;
+
     renderizarCiudad();
     guardarCiudad();
     desactivarModoConstruccion();
 }
 
+function crearEdificio(id, tipo){
+
+    if (Object.values(TipoResidencial).includes(tipo)) {
+        return new EdificioResidencial(id, tipo);
+    }
+
+    if (Object.values(TipoComercial).includes(tipo)) {
+        return new EdificioComercial(id, tipo);
+    }
+
+    if (Object.values(TipoIndustrial).includes(tipo)) {
+        return new EdificioIndustrial(id, tipo);
+    }
+
+    if (Object.values(TipoServicio).includes(tipo)) {
+        return new EdificioServicio(id, tipo);
+    }
+
+    if (Object.values(TipoUtilidad).includes(tipo)) {
+        return new PlantaUtilidad(id, tipo);
+    }
+
+    return null;
+}
+
+
+function obtenerTipoPorModo(modo){
+
+    switch(modo){
+
+        case MODOS_CONSTRUCCION.CASA:
+            return TipoResidencial.CASA;
+
+        case MODOS_CONSTRUCCION.APARTAMENTO:
+            return TipoResidencial.APARTAMENTO;
+
+        case MODOS_CONSTRUCCION.TIENDA:
+            return TipoComercial.TIENDA;
+
+        case MODOS_CONSTRUCCION.MALL:
+            return TipoComercial.CENTRO_COMERCIAL;
+
+        case MODOS_CONSTRUCCION.FABRICA:
+            return TipoIndustrial.FABRICA;
+
+        case MODOS_CONSTRUCCION.GRANJA:
+            return TipoIndustrial.GRANJA;
+
+        case MODOS_CONSTRUCCION.POLICIA:
+            return TipoServicio.ESTACION_POLICIA;
+
+        case MODOS_CONSTRUCCION.BOMBEROS:
+            return TipoServicio.ESTACION_BOMBEROS;
+
+        case MODOS_CONSTRUCCION.HOSPITAL:
+            return TipoServicio.HOSPITAL;
+
+        case MODOS_CONSTRUCCION.PLANTA_ELECTRICA:
+            return TipoUtilidad.PLANTA_ELECTRICA;
+
+        case MODOS_CONSTRUCCION.PLANTA_AGUA:
+            return TipoUtilidad.PLANTA_AGUA;
+
+        default:
+            return null;
+    }
+}
+
+
+//recordar actualizar contadores de todos los elementos, no solo de residenciales (esto es solo una prueba)
 function actualizarContadorResidenciales() {
     if (!contadorResidenciales || !juego) {
         return;
@@ -205,30 +350,6 @@ function actualizarContadorResidenciales() {
     contadorResidenciales.textContent = `Residenciales: ${total} (Casas: ${casas}, Apartamentos: ${apartamentos})`;
 }
 
-function obtenerCostoResidencialPorModo(modo) {
-    if (modo === MODOS_CONSTRUCCION.CASA) {
-        return TipoResidencial.CASA.costo;
-    }
-
-    if (modo === MODOS_CONSTRUCCION.APARTAMENTO) {
-        return TipoResidencial.APARTAMENTO.costo;
-    }
-
-    return Number.MAX_SAFE_INTEGER;
-}
-
-function obtenerSubtipoResidencialPorModo(modo) {
-    if (modo === MODOS_CONSTRUCCION.CASA) {
-        return TipoResidencial.CASA.subtipo;
-    }
-
-    if (modo === MODOS_CONSTRUCCION.APARTAMENTO) {
-        return TipoResidencial.APARTAMENTO.subtipo;
-    }
-
-    return null;
-}
-
 function tieneViaAdyacente(x, y) {
     const {celdas} = juego.ciudad.mapa;
     const maxY = celdas.length;
@@ -250,10 +371,8 @@ function tieneViaAdyacente(x, y) {
     });
 }
 
-function construirVia(event) {
+function construirVia(event, x, y) {
     if (!event.target.classList.contains("celda")) return;
-
-    const {x, y} = event.target.dataset;
 
     const via = new Via(Date.now() + Math.random());
     const { economia } = juego.ciudad;
@@ -272,6 +391,33 @@ function construirVia(event) {
     economia.dinero -= via.costo;
     juego.ciudad.mapa.celdas[y][x] = via.subtipo;
 
+
+    renderizarCiudad();
+    guardarCiudad();
+    desactivarModoConstruccion();
+}
+
+
+function construirParque(x, y){
+
+    const parque = new Parque(Date.now() + Math.random());
+    const { economia } = juego.ciudad;
+
+    const celdaActual = juego.ciudad.mapa.celdas[y][x];
+
+    if (celdaActual !== "g") {
+        alert("Ya existe un elemento en esta celda");
+        return;
+    }
+
+    if(economia.dinero < parque.costo){
+        alert("No hay dinero suficiente para construir el parque");
+        return;
+    }
+
+    economia.dinero -= parque.costo;
+
+    juego.ciudad.mapa.celdas[y][x] = parque.subtipo;
 
     renderizarCiudad();
     guardarCiudad();
