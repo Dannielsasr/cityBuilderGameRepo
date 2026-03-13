@@ -20,3 +20,23 @@ body{
     border: none;
     border-radius: 15px; /* Bordes redondos*/
 }
+
+.botonCargar {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    z-index: 1000;
+}
+
+
+.botonCargar label {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.8); 
+}
+
+.botonCargar label:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}

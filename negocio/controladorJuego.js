@@ -175,7 +175,13 @@ function prepararConstruccionResidencial(event) {
 }
 
 function actualizarContadorResidenciales() {
-    if (!contadorResidenciales || !juego) {
+    // Obtenemos las referencias a los nuevos elementos del DOM
+    const totalResidencial = document.getElementById('numResidencialTotal');
+    const elCasas = document.getElementById('numCasas');
+    const elApartamentos = document.getElementById('numApartamentos');
+
+    // Verificación de seguridad
+    if (!totalResidencial || !elCasas || !elApartamentos || !juego) {
         return;
     }
 
@@ -183,6 +189,7 @@ function actualizarContadorResidenciales() {
     let casas = 0;
     let apartamentos = 0;
 
+    // Lógica de conteo (se mantiene igual)
     celdas.forEach((fila) => {
         fila.forEach((celda) => {
             if (celda === TipoResidencial.CASA.subtipo) {
@@ -194,7 +201,11 @@ function actualizarContadorResidenciales() {
     });
 
     const total = casas + apartamentos;
-    contadorResidenciales.textContent = `Residenciales: ${total} (Casas: ${casas}, Apartamentos: ${apartamentos})`;
+
+    // Actualizamos cada valor por separado
+    totalResidencial.textContent = total;
+    elCasas.textContent = casas;
+    elApartamentos.textContent = apartamentos;
 }
 
 function obtenerCostoResidencialPorModo(modo) {

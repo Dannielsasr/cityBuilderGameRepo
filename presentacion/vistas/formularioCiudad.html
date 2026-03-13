@@ -9,9 +9,12 @@
     <link rel="stylesheet" type="text/css" href="../estilos/formularioCiudad.css">
 </head>
 <body class="d-flex align-items-center justify-content-center min-vh-100">
-    <div>
-        <label for="toLoadFile" class="form-label">Cargar Mapa</label>
-        <input type="file" id="toLoadFile" class="form-control"></div>
+    <div class="botonCargar">
+        <label for="toLoadFile" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-file-earmark-arrow-up"></i> Cargar Mapa
+        </label>
+        <input type="file" id="toLoadFile" class="d-none" accept=".txt">
+    </div>
     <div class="d-flex flex-column align-items-center w-100">
         <h3 class="mb-4">Crear nueva ciudad</h3>
         <div class="container-md">
