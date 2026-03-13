@@ -127,14 +127,20 @@ btnDemoler?.addEventListener("click", function() {
 mapaDiv?.addEventListener("click", construirElemento);
 
 function iniciarJuego() {
-    const idCiudad = localStorage.getItem("ciudadActual");
-    const data = JSON.parse(localStorage.getItem(idCiudad));
+    const data = ciudadRepository.obtenerCiudadActual();
+
+    if (!data) {
+        alert("No existe una ciudad guardada. Crea una ciudad primero.");
+        window.location.href = "./formularioCiudad.html";
+        return;
+    }
 
     const mapa = new Mapa(Number(data.mapa.ancho), Number(data.mapa.largo));
     mapa.celdas = data.mapa.celdas;
 
     const economia = new Economia(data.economia);
     const ciudad = new Ciudad({
+        id: data.idCiudad,
         nombre: data.nombre,
         region: data.region,
         mapa,
@@ -426,29 +432,15 @@ function construirParque(x, y){
 
 
 function guardarCiudad(){
-    const dataGuardada = ciudadRepository.obtenerConfiguracionInicial();
-
-    if (dataGuardada && dataGuardada.ciudad) {
-        dataGuardada.ciudad.mapa.celdas = juego.ciudad.mapa.celdas;
-        dataGuardada.ciudad.recursosIniciales = juego.ciudad.economia.toJSON();
-        dataGuardada.ciudad.poblacion = juego.ciudad.ciudadanos.length;
-
-        ciudadRepository.guardarConfiguracion(dataGuardada);
-    }
-
-    const idCiudad = localStorage.getItem("ciudadActual");
-    if (!idCiudad) {
-        return;
-    }
-
     const dataCiudad = {
-        idCiudad: juego.ciudad.idCiudad,
+        idCiudad: String(juego.ciudad.idCiudad),
         nombre: juego.ciudad.nombre,
         region: juego.ciudad.region,
-        mapa: juego.ciudad.mapa,
-        economia: juego.ciudad.economia,
-        ciudadanos: juego.ciudad.ciudadanos
+        mapa: juego.ciudad.mapa.toJSON(),
+        economia: juego.ciudad.economia.toJSON(),
+        ciudadanos: juego.ciudad.ciudadanos,
+        poblacion: juego.ciudad.ciudadanos.length
     };
 
-    localStorage.setItem(idCiudad, JSON.stringify(dataCiudad));
+    ciudadRepository.guardarCiudadActual(dataCiudad);
 }
