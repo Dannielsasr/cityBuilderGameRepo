@@ -129,6 +129,67 @@
                 <p><b>Ocupación:</b> <span id="ocupacion"></span></p>
 
                 <button id="btnDemolerPanel">Destruir Edificio</button>
+            <div class="col-auto ms-4">
+                <div class="card shadow-sm panel-derecho">
+                    <div class="card-body p-0 d-flex flex-column">
+                        
+                        <div class="seccion-panel border-bottom p-3">
+                            <h6 class="titulo-seccion">Clima</h6>
+                            <div id="clima-contenido">
+                                </div>
+                        </div>
+            
+                        <div class="seccion-panel border-bottom p-3">
+                            <h6 class="titulo-seccion">Noticias</h6>
+                            <div id="noticias-contenido">
+                                </div>
+                        </div>
+            
+                        <div class="seccion-panel p-3">
+                            <h6 class="titulo-seccion">Estadísticas</h6>
+                            <div id="estadisticas-contenido">
+                                <div class="list-group list-group-flush">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">puntaje</span>
+                                        <span id="puntaje">a</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted small">Dinero</span>
+                                        <span id="dinero" class="fw-bold">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted small">Agua</span>
+                                        <span id="totalAgua" class="fw-bold">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted small">Comida</span>
+                                        <span id="totalComida">100%</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">electricidad:</span>
+                                        <span id="totalElectricidad">a</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">Felicidad:</span>
+                                        <span id="promedioFelicidad">a</span>
+                                    </div>
+                                    
+                                    <div class="mt-2 pt-2 border-top">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Residenciales</span>
+                                            <span id="numResidencialTotal" class="fw-bold text-primary">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="text-muted extra-small">Casas: <span id="numCasas" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Aptos: <span id="numApartamentos" class="text-dark">0</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+            
+                    </div>
+                </div>
             </div>
             
             <script type="module" src="../../negocio/controladorJuego.js"></script>

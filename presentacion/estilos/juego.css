@@ -210,3 +210,21 @@ body{
     background-position: center;
     background-repeat: no-repeat;
 }
+
+.panel-derecho {
+    width: 250px; 
+    min-height: 400px;
+    background-color: #ffffff;
+}
+
+.seccion-panel:hover {
+    background-color: #f8f9fa; 
+}
+
+.seccion-panel h6 {
+    color: #0d6efd;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
