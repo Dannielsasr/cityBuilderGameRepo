@@ -15,6 +15,14 @@ const mapaDiv = document.getElementById("mapa");
 const nombreCiudadTitulo = document.getElementById("nombreCiudad");
 const contadorResidenciales = document.getElementById("contadorResidenciales");
 
+const COORDENADAS_REGIONES = { //solo la ciudad mas imoirtante de cada region(no se donde va cali dicen que pacifico y andina)
+    "1": { lat: 4.6097, lon: -74.0817 }, // Andina (Bogotá)
+    "2": { lat: 10.9685, lon: -74.7813 }, // Caribe (Barranquilla)
+    "3": { lat: 5.6947, lon: -76.6611 },  // Pacífica (Quibdó)
+    "4": { lat: 4.1420, lon: -73.6266 },  // Orinoquía (Villavicencio)
+    "5": { lat: -4.2153, lon: -69.9406 }  // Amazonía (Leticia)
+};
+
 const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
     VIA: "VIA",
@@ -48,7 +56,7 @@ btnDemoler?.addEventListener("click", function() {
 
 mapaDiv?.addEventListener("click", manejarClickEnMapa);
 
-function iniciarJuego() {
+async function iniciarJuego() {
     const idCiudad = localStorage.getItem("ciudadActual");
     const data = JSON.parse(localStorage.getItem(idCiudad));
 
@@ -65,6 +73,17 @@ function iniciarJuego() {
 
     juego = new Juego({ ciudad });
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
+
+    const coordenadas = COORDENADAS_REGIONES[data.region];
+    if (coordenadas) {
+        const clima = await obtenerClima(coordenadas.lat, coordenadas.lon);
+        if (clima) {
+            actualizarWidgetClima(clima);
+            setInterval(() => {
+                cargarActualizarClima(coordenadas);
+            }, 1800000);
+        }
+    }
 
     renderizarCiudad();
 
@@ -308,4 +327,46 @@ function guardarCiudad(){
 
     localStorage.setItem(idCiudad, JSON.stringify(dataCiudad));
 }
+// Esta función une la lógica de "pedir datos" con "dibujarlos"
+async function cargarActualizarClima(coords) {
+    const clima = await obtenerClima(coords.lat, coords.lon);
+    if (clima) {
+        actualizarWidgetClima(clima);
+    }
+}
 
+async function obtenerClima(lat, lon) {
+    const apiKey = 'e23751d05ee5b72f2d4de20d6ae1928d'; // Reemplaza con tu llave
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=es`;
+
+    try {
+        const respuesta = await fetch(url);
+        
+        
+        if (!respuesta.ok) {
+            throw new Error('Error al consultar la API');
+        }
+
+        const datos = await respuesta.json();
+        
+        //conseguimos lo que nos pide
+        return {
+            temperatura: Math.round(datos.main.temp),
+            condicion: datos.weather[0].description,
+            humedad: datos.main.humidity,
+            viento: datos.wind.speed,
+            icono: `https://openweathermap.org/img/wn/${datos.weather[0].icon}@2x.png`
+        };
+
+    } catch (error) {
+        console.error("Hubo un fallo en la integración:", error);
+        return null;
+    }
+}
+function actualizarWidgetClima(clima) {
+    document.getElementById("clima-temp").textContent = `${clima.temperatura}°C`;
+    document.getElementById("clima-condicion").textContent = clima.condicion;
+    document.getElementById("clima-icono").src = clima.icono;
+    document.getElementById("clima-humedad").textContent = `Humedad: ${clima.humedad}%`;
+    document.getElementById("clima-viento").textContent = `Viento: ${clima.viento} m/s`;
+}
