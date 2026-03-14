@@ -29,6 +29,8 @@ const btnPlantaAgua = document.getElementById("itemAgua");
 const btnParque = document.getElementById("itemParque");
 const btnVia =  document.getElementById("itemVia");
 const btnDemoler =  document.getElementById("btnDemoler");
+const cerrarPanel = document.getElementById("cerrarPanel");
+const btnDemolerPanel = document.getElementById("btnDemolerPanel");
 
 //grid | otros
 const mapaDiv = document.getElementById("mapa");
@@ -66,6 +68,7 @@ let modo = "";
 let modoConstruccionActivo = MODOS_CONSTRUCCION.NINGUNO;
 let sistemaTurnos;
 const ciudadRepository = new CiudadRepository();
+let edificioSeleccionado = { x: null, y: null };
 
 window.addEventListener("DOMContentLoaded", iniciarJuego);
 
@@ -134,6 +137,27 @@ btnDemoler?.addEventListener("click", function() {
     activarModoDemolicion();
 });
 
+cerrarPanel?.addEventListener("click", function(){
+    document.getElementById("panelEdificio").classList.add("oculto");
+});
+
+btnDemolerPanel?.addEventListener("click", function(){
+
+    const confirmar = confirm("¿Seguro que deseas destruir este edificio?");
+
+    if(!confirmar) return;
+
+    destruirElementoDirecto(
+        edificioSeleccionado.x,
+        edificioSeleccionado.y
+    );
+
+    desactivarModos();
+
+    document.getElementById("panelEdificio").classList.add("oculto");
+
+});
+
 
 mapaDiv?.addEventListener("click", manejarClickMapa);
 
@@ -176,14 +200,21 @@ function iniciarJuego() {
 
 function manejarClickMapa(e){
 
-    if(modo === "construir"){
-        construirElemento(e);
-    }
+    if (!e.target.classList.contains("celda")) return;
 
-    else if(modo === "demoler"){
-        destruirElemento(e);
-    }
+    switch(modo){
 
+        case "construir":
+            construirElemento(e);
+            break;
+
+        case "demoler":
+            destruirElemento(e);
+            break;
+
+        default:
+            mostrarInfoEdificio(e);
+    }
 }
 
 function renderizarCiudad() {
@@ -218,6 +249,7 @@ function activarModoConstruccion(modoConstruir) {
 }
 
 function desactivarModoConstruccion() {
+    modo = "";
     modoConstruccionActivo = MODOS_CONSTRUCCION.NINGUNO;
     document.body.style.cursor = "default";
 }
@@ -229,11 +261,94 @@ function activarModoDemolicion(){
 }
 
 function desactivarModoDemolicion(){
+    modo = ""; 
     document.body.classList.remove("cursor-demolicion");
 }
 
+function desactivarModos(){
+
+    modo = "";
+
+    document.body.style.cursor = "default";
+
+    document.body.classList.remove("cursor-demolicion");
+}
+
+function mostrarInfoEdificio(event){
+
+    const x = Number(event.target.dataset.x);
+    const y = Number(event.target.dataset.y);
+
+    const subtipo = juego.ciudad.mapa.celdas[y][x];
+
+    if(subtipo === "g") return;
+
+    const tipo = obtenerTipoPorSubtipo(subtipo);
+
+    if(!tipo) return;
+
+    // guardar edificio seleccionado
+    edificioSeleccionado.x = x;
+    edificioSeleccionado.y = y;
+
+    const panel = document.getElementById("panelEdificio");
+
+    document.getElementById("nombreEdificio").textContent = tipo.nombre || subtipo;
+
+    document.getElementById("costoConstruccion").textContent = tipo.costo || 0;
+
+    document.getElementById("costoMantenimiento").textContent = tipo.costoMantenimiento || 0;
+
+    document.getElementById("consumoElectricidad").textContent = tipo.consumoElectricidad || 0;
+
+    document.getElementById("consumoAgua").textContent = tipo.consumoAgua || 0;
+
+    document.getElementById("tipoProduccion").textContent = tipo.tipoProduccion || "N/A";
+
+    document.getElementById("produccion").textContent = tipo.produccionPorTurno || "N/A";
+
+    document.getElementById("capacidad").textContent = tipo.capacidad || "N/A";
+
+    //se debe settear cuando se implemente sistema ciudadanos
+    document.getElementById("ocupacion").textContent = "N/A";
+
+    panel.classList.remove("oculto");
+}
+
+//este metodo aplica la misma demolicion solo que ya no depende del click
+function destruirElementoDirecto(x, y){
+
+    const subtipo = juego.ciudad.mapa.celdas[y][x];
+
+    if(subtipo === "g") return;
+
+    let costo = 0;
+
+    if(subtipo === "r"){
+        const via = new Via(0);
+        costo = via.costo;
+    }
+
+    else if(subtipo === "P1"){
+        const parque = new Parque(0);
+        costo = parque.costo;
+    }
+
+    else{
+        const tipo = obtenerTipoPorSubtipo(subtipo);
+        const edificio = crearEdificio(0, tipo);
+        costo = edificio.costo;
+    }
+
+    juego.ciudad.economia.dinero += Math.floor(costo * 0.5);
+
+    juego.ciudad.mapa.celdas[y][x] = "g";
+
+    renderizarCiudad();
+    guardarCiudad();
+}
+
 function destruirElemento(event){
-    if (!event.target.classList.contains("celda")) return;
 
     const x = Number(event.target.dataset.x);
     const y = Number(event.target.dataset.y);
@@ -278,7 +393,6 @@ function destruirElemento(event){
 
 function construirElemento(event){
     if(modoConstruccionActivo === MODOS_CONSTRUCCION.NINGUNO) return;
-    if (!event.target.classList.contains("celda")) return;
 
     const x = Number(event.target.dataset.x);
     const y = Number(event.target.dataset.y);

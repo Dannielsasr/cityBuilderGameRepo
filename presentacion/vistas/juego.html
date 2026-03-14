@@ -94,10 +94,31 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> <!-- finalizacion container de herramientas -->
 
             <div id="grid-container">
                 <div id="mapa" class="mapa"></div>
+            </div>
+
+            <!-- panel de informacion edificios (ESCONDIDO POR DEFECTO)-->
+            <div id="panelEdificio" class="panel-edificio oculto">
+                <button id="cerrarPanel" class="btn btn-danger">X</button>
+
+                <h2 id="nombreEdificio"></h2>
+
+                <p><b>Costo construcción:</b> <span id="costoConstruccion"></span></p>
+                <p><b>Mantenimiento:</b> <span id="costoMantenimiento"></span></p>
+
+                <p><b>Consume electricidad:</b> <span id="consumoElectricidad"></span></p>
+                <p><b>Consume agua:</b> <span id="consumoAgua"></span></p>
+
+                <p><b>Tipo producción:</b> <span id="tipoProduccion"></span></p>
+                <p><b>Produce:</b> <span id="produccion"></span></p>
+
+                <p><b>Capacidad:</b> <span id="capacidad"></span></p>
+                <p><b>Ocupación:</b> <span id="ocupacion"></span></p>
+
+                <button id="btnDemolerPanel">Destruir Edificio</button>
             </div>
             
             <script type="module" src="../../negocio/controladorJuego.js"></script>
