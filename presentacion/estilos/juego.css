@@ -16,6 +16,12 @@ body{
     text-align: center;
 }
 
+.container-labels{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .celda{
     background: green;
     border-radius: 3px;

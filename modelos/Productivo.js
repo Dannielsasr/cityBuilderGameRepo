@@ -3,12 +3,25 @@ import { Edificio } from "./Edificio.js";
 export class Productivo extends Edificio{
     #empleados;
 
-    constructor({id, costo, costoMantenimiento,
-                consumoElectricidad, consumoAgua}) {
-                
-        super({id, costo, costoMantenimiento, consumoElectricidad, consumoAgua});
-        this.#empleados = [];
-    }
+    constructor({
+        id,
+        costo,
+        costoMantenimiento,
+        consumoElectricidad,
+        consumoAgua,
+        subtipo
+    }) {
+    super({
+        id,
+        costo,
+        costoMantenimiento,
+        consumoElectricidad,
+        consumoAgua,
+        subtipo
+    });
+
+    this.#empleados = [];
+}
 
     get empleados() {
         return [...this.#empleados];

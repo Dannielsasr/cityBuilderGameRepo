@@ -14,6 +14,7 @@ import { SistemaTurnos } from "./SistemaTurnos.js";
 import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
 
 
+//botones
 const btnCasa = document.getElementById("itemCasa");
 const btnApartamento = document.getElementById("itemApartamento");
 const btnTienda = document.getElementById("itemTienda");
@@ -26,12 +27,21 @@ const btnHospital = document.getElementById("itemHospital");
 const btnPlantaElectrica = document.getElementById("itemElectrica");
 const btnPlantaAgua = document.getElementById("itemAgua");
 const btnParque = document.getElementById("itemParque");
-
 const btnVia =  document.getElementById("itemVia");
 const btnDemoler =  document.getElementById("btnDemoler");
+
+//grid | otros
 const mapaDiv = document.getElementById("mapa");
 const nombreCiudadTitulo = document.getElementById("nombreCiudad");
+
+//contadores
 const contadorResidenciales = document.getElementById("contadorResidenciales");
+const contadorComerciales = document.getElementById("contadorComerciales");
+const contadorUtilidades = document.getElementById("contadorUtilidades");
+const contadorServicios = document.getElementById("contadorServicios");
+const contadorIndustriales = document.getElementById("contadorIndustriales");
+const contadorParques = document.getElementById("contadorParques");
+const contadorVias = document.getElementById("contadorVias");
 
 const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
@@ -167,7 +177,6 @@ function renderizarCiudad() {
     mapaDiv.innerHTML = "";
 
     const { ciudad: { mapa: { celdas } } } = juego;
-    console.log("Renderizando ciudad con celdas:", celdas);
 
     const ancho = celdas[0].length;
     mapaDiv.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
@@ -179,14 +188,13 @@ function renderizarCiudad() {
             div.classList.add("celda");
             div.dataset.x = x;
             div.dataset.y = y;
-            console.log(`Renderizando celda en (${x}, ${y}) con valor:`, celda);
             div.setAttribute("subtype", celda);
 
             mapaDiv.appendChild(div);
         });
     });
 
-    actualizarContadorResidenciales();
+    actualizarContadorElementos();
 }
 
 //settea el modo y cambia el aspecto del cursor
@@ -201,7 +209,7 @@ function desactivarModoConstruccion() {
 }
 
 function construirElemento(event){
-
+    if(modoConstruccionActivo === MODOS_CONSTRUCCION.NINGUNO) return;
     if (!event.target.classList.contains("celda")) return;
 
     const x = Number(event.target.dataset.x);
@@ -214,7 +222,7 @@ function construirElemento(event){
         return;
     }
 
-    // casos especiales primero
+    // casos especiales
     if (modoConstruccionActivo === MODOS_CONSTRUCCION.VIA) {
         construirVia(event, x, y);
         return;
@@ -231,7 +239,6 @@ function construirElemento(event){
         console.error("Modo sin tipo:", modoConstruccionActivo);
         return;
     }
-
     const edificio = crearEdificio(Date.now() + Math.random(), tipo);
 
     if(!edificio){
@@ -246,11 +253,8 @@ function construirElemento(event){
         return;
     }
 
-    if(
-        (tipo === TipoResidencial.CASA || tipo === TipoResidencial.APARTAMENTO)
-        && !tieneViaAdyacente(x, y)
-    ){
-        alert("Debe existir una vía adyacente para construir un edificio residencial");
+    if(!tieneViaAdyacente(x, y)){
+        alert("Debe existir una vía adyacente para construir un edificio tipo: " + modoConstruccionActivo);
         return;
     }
 
@@ -332,28 +336,87 @@ function obtenerTipoPorModo(modo){
 }
 
 
-//recordar actualizar contadores de todos los elementos, no solo de residenciales (esto es solo una prueba)
-function actualizarContadorResidenciales() {
-    if (!contadorResidenciales || !juego) {
+//este metodo simplemente actualiza los contadores de los elementos en pantalla.
+function actualizarContadorElementos() {
+    if (!contadorResidenciales || !contadorComerciales || !contadorIndustriales || !contadorServicios || !contadorUtilidades || !contadorParques || !contadorVias || !juego) {
         return;
     }
 
     const {celdas} = juego.ciudad.mapa;
-    let casas = 0;
-    let apartamentos = 0;
 
+    let casas = 0, esCasa = TipoResidencial.CASA.subtipo;
+    let apartamentos = 0, esApartamento = TipoResidencial.APARTAMENTO.subtipo;
+    let tiendas = 0, esTienda = TipoComercial.TIENDA.subtipo;
+    let malls = 0, esMall = TipoComercial.CENTRO_COMERCIAL.subtipo;
+    let fabricas = 0, esFabrica = TipoIndustrial.FABRICA.subtipo;
+    let granjas = 0, esGranja = TipoIndustrial.GRANJA.subtipo;
+    let policias = 0, esPolicia = TipoServicio.ESTACION_POLICIA.subtipo;
+    let bomberos = 0, esBombero = TipoServicio.ESTACION_BOMBEROS.subtipo;
+    let hospitales = 0, esHospital = TipoServicio.HOSPITAL.subtipo;
+    let plantasElectricidad = 0, esElectrica = TipoUtilidad.PLANTA_ELECTRICA.subtipo;
+    let plantasAgua = 0, esAgua = TipoUtilidad.PLANTA_AGUA.subtipo;
+    let parques = 0, esParque = "P1";
+    let vias = 0, esVia = "r";
+
+
+    //no es lo mas eficientes debido a que recorre nuevamente el mapa.
     celdas.forEach((fila) => {
         fila.forEach((celda) => {
-            if (celda === TipoResidencial.CASA.subtipo) {
+            if (celda === esCasa) {
                 casas += 1;
-            } else if (celda === TipoResidencial.APARTAMENTO.subtipo) {
+            }
+            if (celda === esApartamento) {
                 apartamentos += 1;
+            }
+            if(celda === esTienda){
+                tiendas += 1;
+            }
+            if(celda === esMall){
+                malls += 1;
+            }
+            if(celda === esFabrica){
+                fabricas += 1;
+            }
+            if(celda === esGranja){
+                granjas += 1;
+            }
+            if(celda === esPolicia){
+                policias += 1;
+            }
+            if(celda === esBombero){
+                bomberos += 1;
+            }
+            if(celda === esHospital){
+                hospitales += 1;
+            }
+            if(celda === esElectrica){
+                plantasElectricidad += 1;
+            }
+            if(celda === esAgua){
+                plantasAgua += 1;
+            }
+            if(celda === esParque){
+                parques += 1;
+            }
+            if(celda === esVia){
+                vias += 1;
             }
         });
     });
 
-    const total = casas + apartamentos;
-    contadorResidenciales.textContent = `Residenciales: ${total} (Casas: ${casas}, Apartamentos: ${apartamentos})`;
+    const totalResidenciales = casas + apartamentos;
+    const totalComeciales = tiendas + malls;
+    const totalIndustriales = fabricas + granjas;
+    const totalServicios = policias + bomberos + hospitales;
+    const totalUtilidades = plantasElectricidad + plantasAgua;
+
+    contadorResidenciales.textContent = `Residenciales: ${totalResidenciales} (Casas: ${casas}, Apartamentos: ${apartamentos})`;
+    contadorComerciales.textContent = `Comerciales: ${totalComeciales} (Tiendas: ${tiendas}, Malls: ${malls})`;;
+    contadorIndustriales.textContent = `Industriales: ${totalIndustriales} (Fabricas: ${fabricas}, Granjas: ${granjas})`;
+    contadorServicios.textContent = `Servicios: ${totalServicios} (Estaciones Policia: ${policias}, Estaciones Bombero: ${bomberos}, Hospitales: ${hospitales})`;
+    contadorUtilidades.textContent = `Utilidades: ${totalUtilidades} (Plantas electricas: ${plantasElectricidad}, Plantas agua: ${plantasAgua})`;
+    contadorParques.textContent = `parques: ${parques}`;
+    contadorVias.textContent = `vias: ${vias}`;
 }
 
 function tieneViaAdyacente(x, y) {

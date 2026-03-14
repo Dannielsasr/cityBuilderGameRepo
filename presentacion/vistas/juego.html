@@ -10,7 +10,17 @@
         </head>
         <body>
             <h3 id="nombreCiudad" class="text-center my-4"> Una ciudad </h3>
-            <p id="contadorResidenciales" class="text-center fw-semibold">Residenciales: 0 (Casas: 0, Apartamentos: 0)</p>
+            
+            <div class="container-labels">
+                <label id="contadorResidenciales" class="text-center fw-semibold">Residenciales: 0 (Casas: 0, Apartamentos: 0)</label>
+                <label id="contadorComerciales" class="text-center fw-semibold">Comerciales: 0 (Tiendas: 0, Malls: 0)</label>
+                <label id="contadorIndustriales" class="text-center fw-semibold">Industriales: 0 (Fabricas: 0, Granjas: 0)</label>
+                <label id="contadorServicios" class="text-center fw-semibold">Servicios: 0 (Estaciones policia: 0, Estaciones Bombero: 0, Hospitales: 0)</label>
+                <label id="contadorUtilidades" class="text-center fw-semibold">Utilidades: 0 (Plantas electricas: 0, Plantas agua: 0)</label>
+                <label id="contadorParques" class="text-center fw-semibold">parques: 0</label>
+                <label id="contadorVias" class="text-center fw-semibold">vias: 0</label>
+            </div>
+
             <div class="container-fluid d-flex mt-3">
                 <div class="col-auto me-4">
                     <div class="card shadow-sm">
@@ -50,30 +60,30 @@
                                             <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoIndustrial">Edificios industrial</button>
                                             <div class="collapse ms-2" id="tipoIndustrial">
                                                 <div class="d-grid gap-1 py-1">
-                                                    <button class="btn btn-objeto border" id="itemFabrica" title="(Capacidad: 50, Costo: $10,000)">Fabrica</button>
-                                                    <button class="btn btn-objeto border" id="itemGranja" title="(Capacidad: 30, Costo: $7,000)">Granja</button>
+                                                    <button class="btn btn-objeto border" id="itemFabrica" title="(genera dinero: 800, Capacidad: 50, Costo: $10,000)">Fabrica</button>
+                                                    <button class="btn btn-objeto border" id="itemGranja" title="(genera alimento: 50, Capacidad: 30, Costo: $7,000)">Granja</button>
                                                 </div>
                                             </div>
         
                                             <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoServicio">Edificios de servicios</button>
                                             <div class="collapse ms-2" id="tipoServicio">
                                                 <div class="d-grid gap-1 py-1">
-                                                    <button class="btn btn-objeto border" id="itemPolicia" title="(Capacidad: 10, Costo: $5,000)">Policía</button>
-                                                    <button class="btn btn-objeto border" id="itemBomberos" title="(Capacidad: 15, Costo: $8,000)">Bomberos</button>
-                                                    <button class="btn btn-objeto border" id="itemHospital" title="(Capacidad: 50, Costo: $25,000)">Hospital</button>
+                                                    <button class="btn btn-objeto border" id="itemPolicia" title="(genera felicidad: 10, Capacidad: 10, Costo: $5,000)">Policía</button>
+                                                    <button class="btn btn-objeto border" id="itemBomberos" title="(genera felicidad: 10, Capacidad: 15, Costo: $8,000)">Bomberos</button>
+                                                    <button class="btn btn-objeto border" id="itemHospital" title="(genera felicidad: 10, Capacidad: 50, Costo: $25,000)">Hospital</button>
                                                 </div>
                                             </div>
         
                                             <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#tipoUtilidad">Edificios de utilidad</button>
                                             <div class="collapse ms-2" id="tipoUtilidad">
                                                 <div class="d-grid gap-1 py-1">
-                                                    <button class="btn btn-objeto border" id="itemElectrica" title="(Capacidad: 100, Costo: $15,000)">Planta electrica</button>
-                                                    <button class="btn btn-objeto border" id="itemAgua" title="(Capacidad: 200, Costo: $12,000)">Planta de agua</button>
+                                                    <button class="btn btn-objeto border" id="itemElectrica" title="(genera electricidad: 200, Capacidad: 100, Costo: $15,000)">Planta electrica</button>
+                                                    <button class="btn btn-objeto border" id="itemAgua" title="(genera agua: 200, Capacidad: 150, Costo: $12,000)">Planta de agua</button>
                                                 </div>
                                             </div>
         
-                                            <button class="btn btn-sm btn-light border" id="itemParque" title="Parque">Parque</button>
-                                            <button class="btn btn-sm btn-light border" id="itemVia" title="Vía">Vía</button>
+                                            <button class="btn btn-sm btn-light border" id="itemParque" title="(costo: 1500)">Parque</button>
+                                            <button class="btn btn-sm btn-light border" id="itemVia" title="(costo: 100)">Vía</button>
                                         </div>
                                     </div>
         

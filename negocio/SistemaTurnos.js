@@ -72,98 +72,127 @@ export class SistemaTurnos {
     const { celdas } = this.#juego.ciudad.mapa;
     const { economia } = this.#juego.ciudad;
 
-    let consumoElectricidad = 0;
-    let consumoAgua = 0;
-
-    let produccionElectricidad = 0;
-    let produccionAgua = 0;
-
-    let ingresoTotal = 0;
-    let beneficioFelicidadTotal = 0;
+	let totals = {
+		produccionElectricidad: 0,
+		produccionAgua: 0,
+		consumoElectricidad: 0,
+		consumoAgua: 0,
+		ingresoTotal: 0,
+		beneficioFelicidadTotal: 0,
+		mantenimiento: 0
+	};
 
 	celdas.forEach(fila => {
-    fila.forEach(subtipo => {
-
-			if(subtipo === "P1"){
-				beneficioFelicidadTotal += 5;
-				return;
-			}
-
-			const tipo = CONFIG_EDIFICIOS[subtipo];
-			if(!tipo) return;
-
-			consumoElectricidad += tipo.consumoElectricidad || 0;
-			consumoAgua += tipo.consumoAgua || 0;
-
-			if(tipo.produccionPorTurno){
-
-				if(tipo.tipoProduccion === "ELECTRICIDAD"){
-					produccionElectricidad += tipo.produccionPorTurno;
-				}
-
-				if(tipo.tipoProduccion === "AGUA"){
-					produccionAgua += tipo.produccionPorTurno;
-				}
-
-				if(tipo.tipoProduccion === "DINERO"){
-					ingresoTotal += tipo.produccionPorTurno;
-				}
-
-				if(tipo.tipoProduccion === "ALIMENTOS"){
-					economia.alimentos += tipo.produccionPorTurno;
-				}
-
-			}
-
-			if(tipo.ingresoPorTurno){
-				ingresoTotal += tipo.ingresoPorTurno;
-			}
-
-			if(tipo.beneficioFelicidad){
-				beneficioFelicidadTotal += tipo.beneficioFelicidad;
-			}
-
+		fila.forEach(subtipo => {
+			this._procesarCelda(subtipo, economia, totals);
 		});
 	});
 
-    economia.electricidad += produccionElectricidad;
-    economia.agua += produccionAgua;
-    economia.dinero += ingresoTotal;
+	this._aplicarProduccionYConsumo(economia, totals);
+	this._aplicarFelicidadCiudadanos(totals.beneficioFelicidadTotal);
+	this._procesarMantenimiento(economia, totals.mantenimiento);
 
-    const aplicadoElectricidad = Math.min(economia.electricidad, consumoElectricidad);
-    const aplicadoAgua = Math.min(economia.agua, consumoAgua);
+	const balance = (totals.produccionElectricidad + totals.produccionAgua + totals.ingresoTotal) - (totals.consumoElectricidad + totals.consumoAgua);
 
-    economia.electricidad -= aplicadoElectricidad;
-    economia.agua -= aplicadoAgua;
-
-    this.aplicarFelicidadServicios(beneficioFelicidadTotal);
-
-    this.#onActualizacion({
-        consumoElectricidad,
-        consumoAgua,
-        produccionElectricidad,
-        produccionAgua,
-        ingresoTotal,
-        beneficioFelicidadTotal
-    });
+	this.#onActualizacion({
+		consumoElectricidad: totals.consumoElectricidad,
+		consumoAgua: totals.consumoAgua,
+		produccionElectricidad: totals.produccionElectricidad,
+		produccionAgua: totals.produccionAgua,
+		ingresoTotal: totals.ingresoTotal,
+		beneficioFelicidadTotal: totals.beneficioFelicidadTotal,
+		mantenimientoTotal: totals.mantenimiento,
+		balance
+	});
 
 	}
 
 
-	aplicarFelicidadServicios(beneficio){
+	_procesarCelda(subtipo, economia, totals){
+		if(subtipo === "P1"){
+			totals.beneficioFelicidadTotal += 5;
+			return;
+		}
 
-    if(!beneficio) return;
+		const tipo = CONFIG_EDIFICIOS[subtipo];
+		if(!tipo) return;
 
-    const { ciudadanos } = this.#juego.ciudad;
+		totals.mantenimiento += tipo.costoMantenimiento || 0;
 
-    ciudadanos.forEach(ciudadano => {
+		totals.consumoElectricidad += tipo.consumoElectricidad || 0;
+		totals.consumoAgua += tipo.consumoAgua || 0;
 
-        const nuevaFelicidad = Math.min(
-            100,
-            ciudadano.felicidad + beneficio
-        );
+		this._procesarProduccion(tipo, economia, totals);
 
-        ciudadano.felicidad = nuevaFelicidad;
-    });
-}
+		if(tipo.beneficioFelicidad){
+			totals.beneficioFelicidadTotal += tipo.beneficioFelicidad;
+		}
+	}
+
+	_procesarProduccion(tipo, economia, totals){
+		if(!tipo.produccionPorTurno) return;
+
+		const esEnergia = tipo.tipoProduccion === "ELECTRICIDAD";
+		const esAgua = tipo.tipoProduccion === "AGUA";
+		const esDinero = tipo.tipoProduccion === "DINERO";
+		const esAlimentos = tipo.tipoProduccion === "ALIMENTOS";
+
+		if(esEnergia){
+			totals.produccionElectricidad += tipo.produccionPorTurno;
+		}
+
+		if(esAgua){
+			totals.produccionAgua += tipo.produccionPorTurno;
+		}
+
+		const escasezRecursos = economia.agua === 0 || economia.electricidad === 0;
+		let produccionActual = tipo.produccionPorTurno;
+		if((esDinero || esAlimentos) && escasezRecursos){
+			produccionActual *= 0.5;
+		}
+
+		if(esDinero){
+			totals.ingresoTotal += produccionActual;
+		}
+
+		if(esAlimentos){
+			economia.alimento = (economia.alimento || 0) + produccionActual;
+		}
+	}
+
+	_procesarMantenimiento(economia, mantenimientoTotal){
+		economia.dinero -= mantenimientoTotal;
+	}
+
+	_aplicarProduccionYConsumo(economia, totals){
+		//produccion
+		economia.electricidad += totals.produccionElectricidad;
+		economia.agua += totals.produccionAgua;
+		economia.dinero += totals.ingresoTotal;
+
+		//consumo
+		const aplicadoElectricidad = Math.min(economia.electricidad, totals.consumoElectricidad);
+		const aplicadoAgua = Math.min(economia.agua, totals.consumoAgua);
+
+		economia.electricidad -= aplicadoElectricidad;
+		economia.agua -= aplicadoAgua;
+	}
+
+
+	_aplicarFelicidadCiudadanos(beneficio){
+
+		if(!beneficio) return;
+
+		const { ciudadanos } = this.#juego.ciudad;
+
+		ciudadanos.forEach(ciudadano => {
+
+			const nuevaFelicidad = Math.min(
+				100,
+				ciudadano.felicidad + beneficio
+			);
+
+			ciudadano.felicidad = nuevaFelicidad;
+		});
+	}
 }
