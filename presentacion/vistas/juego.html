@@ -134,9 +134,28 @@
                     <div class="card-body p-0 d-flex flex-column">
                         
                         <div class="seccion-panel border-bottom p-3">
-                            <h6 class="titulo-seccion">Clima</h6>
+                            <h6 class="titulo-seccion mb-3">Clima Actual</h6>
                             <div id="clima-contenido">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h3 id="clima-temp" class="fw-bold mb-0 text-primary">--°C</h3>
+                                    <img id="clima-icono" src="" alt="clima" class="clima-img">
                                 </div>
+                        
+                                <div id="clima-condicion" class="text-capitalize fw-semibold mb-3 small text-secondary">
+                                    Cargando...
+                                </div>
+                        
+                                <div class="list-group list-group-flush border-top pt-2">
+                                    <div class="clima-detalle">
+                                        <span class="text-muted small">Humedad</span>
+                                        <span id="clima-humedad" class="clima-valor">--%</span>
+                                    </div>
+                                    <div class="clima-detalle">
+                                        <span class="text-muted small">Viento</span>
+                                        <span id="clima-viento" class="clima-valor">-- m/s</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
             
                         <div class="seccion-panel border-bottom p-3">

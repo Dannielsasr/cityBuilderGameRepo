@@ -48,6 +48,14 @@ const contadorParques = document.getElementById("contadorParques");
 const contadorVias = document.getElementById("contadorVias");
 const estadisticasCiudadanosLabel = document.getElementById("estadisticasCiudadanos");
 
+const COORDENADAS_REGIONES = { //solo la ciudad mas imoirtante de cada region(no se donde va cali dicen que pacifico y andina)
+    "1": { lat: 4.6097, lon: -74.0817 }, // Andina (Bogotá)
+    "2": { lat: 10.9685, lon: -74.7813 }, // Caribe (Barranquilla)
+    "3": { lat: 5.6947, lon: -76.6611 },  // Pacífica (Quibdó)
+    "4": { lat: 4.1420, lon: -73.6266 },  // Orinoquía (Villavicencio)
+    "5": { lat: -4.2153, lon: -69.9406 }  // Amazonía (Leticia)
+};
+
 const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
     VIA: "VIA",
@@ -170,7 +178,7 @@ btnDemolerPanel?.addEventListener("click", function(){
 
 mapaDiv?.addEventListener("click", manejarClickMapa);
 
-function iniciarJuego() {
+async function iniciarJuego() {
     const data = ciudadRepository.obtenerCiudadActual();
 
     if (!data) {
@@ -198,6 +206,17 @@ function iniciarJuego() {
     juego = new Juego({ ciudad, turnoActual: data.turnoActual ?? 0 });
     rehidratarAsignacionesCiudadanos(ciudadanosPersistidos, juego.ciudad, mapa.celdas);
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
+
+    const coordenadas = COORDENADAS_REGIONES[data.region];
+    if (coordenadas) {
+        const clima = await obtenerClima(coordenadas.lat, coordenadas.lon);
+        if (clima) {
+            actualizarWidgetClima(clima);
+            setInterval(() => {
+                cargarActualizarClima(coordenadas);
+            }, 1800000);
+        }
+    }
 
     renderizarCiudad();
     //setteamos para que juego este global en controladorRutas
@@ -723,6 +742,13 @@ function construirParque(x, y){
     renderizarCiudad();
     guardarCiudad();
     desactivarModoConstruccion();
+}
+// Esta función une la lógica de "pedir datos" con "dibujarlos"
+async function cargarActualizarClima(coords) {
+    const clima = await obtenerClima(coords.lat, coords.lon);
+    if (clima) {
+        actualizarWidgetClima(clima);
+    }
 }
 
 

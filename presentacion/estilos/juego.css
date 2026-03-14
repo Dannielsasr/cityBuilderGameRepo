@@ -228,3 +228,37 @@ body{
     font-size: 0.8rem;
     margin-bottom: 1rem;
 }
+
+/* Contenedor de la imagen del clima */
+.clima-img {
+    width: 50px;
+    height: 50px;
+    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+
+.clima-detalle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.clima-valor {
+    font-weight: bold;
+    font-size: 0.875rem; 
+}
+
+
+.titulo-seccion {
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+
+#clima-temp {
+    letter-spacing: -1px;
+}
