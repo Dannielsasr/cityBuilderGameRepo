@@ -56,6 +56,9 @@ const COORDENADAS_REGIONES = { //solo la ciudad mas imoirtante de cada region(no
     "5": { lat: -4.2153, lon: -69.9406 }  // Amazonía (Leticia)
 };
 
+
+const NEWS_API_KEY = 'cef654a6ffa14e18bf4b692f76e40a5c';
+
 const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
     VIA: "VIA",
@@ -206,17 +209,22 @@ async function iniciarJuego() {
     juego = new Juego({ ciudad, turnoActual: data.turnoActual ?? 0 });
     rehidratarAsignacionesCiudadanos(ciudadanosPersistidos, juego.ciudad, mapa.celdas);
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
-
+    //clima
     const coordenadas = COORDENADAS_REGIONES[data.region];
     if (coordenadas) {
         const clima = await obtenerClima(coordenadas.lat, coordenadas.lon);
         if (clima) {
             actualizarWidgetClima(clima);
+
             setInterval(() => {
                 cargarActualizarClima(coordenadas);
             }, 1800000);
         }
     }
+    cargarActualizarNoticias();
+    setInterval(() => {
+        cargarActualizarNoticias();
+    }, 1800000);
 
     renderizarCiudad();
     //setteamos para que juego este global en controladorRutas
