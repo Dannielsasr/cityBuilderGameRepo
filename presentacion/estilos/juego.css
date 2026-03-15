@@ -64,6 +64,20 @@ body{
     color: white;
 }
 
+.celda.origen {
+    background-color: #c0392b; /* rojo */
+}
+
+.celda.destino {
+    background-color: #c0392b; /* rojo */
+}
+
+.celda.ruta {
+    border: solid;
+    transition: background-color 0.2s;
+    transition: border 0.2s; /* opcional para animar */
+}
+
 .oculto{
     display:none;
 }

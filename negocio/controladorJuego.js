@@ -12,6 +12,7 @@ import { Parque } from "../modelos/Parque.js";
 import { CiudadRepository } from "../accesoDatos/ciudadRepository.js";
 import { SistemaTurnos } from "./SistemaTurnos.js";
 import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
+import * as Rutas from "./controladorRutas.js";
 
 
 //botones
@@ -67,8 +68,8 @@ let juego;
 let modo = "";
 let modoConstruccionActivo = MODOS_CONSTRUCCION.NINGUNO;
 let sistemaTurnos;
-const ciudadRepository = new CiudadRepository();
 let edificioSeleccionado = { x: null, y: null };
+const ciudadRepository = new CiudadRepository();
 
 window.addEventListener("DOMContentLoaded", iniciarJuego);
 
@@ -186,6 +187,8 @@ function iniciarJuego() {
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
 
     renderizarCiudad();
+    //setteamos para que juego este global en controladorRutas
+    Rutas.setJuego(juego);
 
     sistemaTurnos = new SistemaTurnos(
         juego,
