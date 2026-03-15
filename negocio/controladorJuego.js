@@ -741,13 +741,7 @@ function construirParque(x, y){
     guardarCiudad();
     desactivarModoConstruccion();
 }
-// Esta función une la lógica de "pedir datos" con "dibujarlos"
-async function cargarActualizarClima(coords) {
-    const clima = await obtenerClima(coords.lat, coords.lon);
-    if (clima) {
-        actualizarWidgetClima(clima);
-    }
-}
+
 
 
 function guardarCiudad(){
