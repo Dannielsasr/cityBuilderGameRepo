@@ -1,4 +1,4 @@
-import { CiudadRepository } from "../accesoDatos/ciudadRepository.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 
 const ciudadRepository = new CiudadRepository();
 

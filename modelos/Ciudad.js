@@ -11,13 +11,13 @@ export class Ciudad {
     #ciudadanos;
     #economia;
 
-    constructor({ id = Date.now() + Math.random(), nombre = "mi_Ciudad", region, mapa, economia }) {
+    constructor({ id = Date.now() + Math.random(), nombre = "mi_Ciudad", region, mapa, economia, ciudadanos = [] }) {
         this.#idCiudad = id;
         this.nombre = nombre;
         this.region = region; //mediante API region
         this.mapa = mapa;
         this.economia = economia;
-        this.#ciudadanos = [];
+        this.#ciudadanos = this.#normalizarCiudadanos(ciudadanos);
     }
 
     get idCiudad() {
@@ -79,5 +79,50 @@ export class Ciudad {
         }
 
         this.#ciudadanos.push(ciudadano);
+    }
+
+    obtenerCiudadanosSinVivienda() {
+        return this.#ciudadanos.filter((ciudadano) => ciudadano.vivienda === null);
+    }
+
+    obtenerCiudadanosDesempleados() {
+        return this.#ciudadanos.filter((ciudadano) => ciudadano.empleo === null);
+    }
+
+    obtenerTotalEmpleados() {
+        return this.#ciudadanos.filter((ciudadano) => ciudadano.empleo !== null).length;
+    }
+
+    obtenerTotalDesempleados() {
+        return this.#ciudadanos.filter((ciudadano) => ciudadano.empleo === null).length;
+    }
+
+    #normalizarCiudadanos(ciudadanos) {
+        if (!Array.isArray(ciudadanos)) {
+            throw new Error("Ciudadanos inválidos");
+        }
+
+        return ciudadanos.map((ciudadano, index) => {
+            if (ciudadano instanceof Ciudadano) {
+                return ciudadano;
+            }
+
+            if (!ciudadano || typeof ciudadano !== "object") {
+                throw new Error("Ciudadano inválido");
+            }
+
+            const felicidad = Number(ciudadano.felicidad);
+            const felicidadNormalizada = Number.isFinite(felicidad)
+                ? Math.max(0, Math.min(100, felicidad))
+                : 100;
+
+            return new Ciudadano({
+                id: ciudadano.id ?? `${this.#idCiudad}-c-${index + 1}`,
+                nombre: ciudadano.nombre ?? `Ciudadano ${index + 1}`,
+                felicidad: felicidadNormalizada,
+                vivienda: null,
+                empleo: null
+            });
+        });
     }
 }
