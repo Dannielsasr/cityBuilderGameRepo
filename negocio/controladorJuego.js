@@ -13,7 +13,7 @@ const btnConstruirVia =  document.getElementById("btnConstruirVia");
 const btnDemoler =  document.getElementById("btnDemoler");
 const mapaDiv = document.getElementById("mapa");
 const nombreCiudadTitulo = document.getElementById("nombreCiudad");
-const contadorResidenciales = document.getElementById("contadorResidenciales");
+
 
 const COORDENADAS_REGIONES = { //solo la ciudad mas imoirtante de cada region(no se donde va cali dicen que pacifico y andina)
     "1": { lat: 4.6097, lon: -74.0817 }, // Andina (Bogotá)
@@ -22,6 +22,9 @@ const COORDENADAS_REGIONES = { //solo la ciudad mas imoirtante de cada region(no
     "4": { lat: 4.1420, lon: -73.6266 },  // Orinoquía (Villavicencio)
     "5": { lat: -4.2153, lon: -69.9406 }  // Amazonía (Leticia)
 };
+
+
+const NEWS_API_KEY = 'cef654a6ffa14e18bf4b692f76e40a5c';
 
 const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
@@ -73,17 +76,22 @@ async function iniciarJuego() {
 
     juego = new Juego({ ciudad });
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
-
+    //clima
     const coordenadas = COORDENADAS_REGIONES[data.region];
     if (coordenadas) {
         const clima = await obtenerClima(coordenadas.lat, coordenadas.lon);
         if (clima) {
             actualizarWidgetClima(clima);
+
             setInterval(() => {
                 cargarActualizarClima(coordenadas);
             }, 1800000);
         }
     }
+    cargarActualizarNoticias();
+    setInterval(() => {
+        cargarActualizarNoticias();
+    }, 1800000);
 
     renderizarCiudad();
 
@@ -369,4 +377,88 @@ function actualizarWidgetClima(clima) {
     document.getElementById("clima-icono").src = clima.icono;
     document.getElementById("clima-humedad").textContent = `Humedad: ${clima.humedad}%`;
     document.getElementById("clima-viento").textContent = `Viento: ${clima.viento} m/s`;
+}
+
+async function obtenerNoticias() {
+    const url = `https://newsapi.org/v2/everything?q=Colombia&language=es&sortBy=publishedAt&pageSize=5&apiKey=${NEWS_API_KEY}`;
+
+    try {
+        const respuesta = await fetch(url);
+        if (!respuesta.ok) throw new Error('Error al conectar con NewsAPI');
+        
+        const datos = await respuesta.json();
+        
+        
+        return datos.articles.slice(0, 5); 
+    } catch (error) {
+        console.error("Fallo al cargar noticias:", error);
+        return [];
+    }
+}
+
+function renderizarNoticias(articulos) {//cargar las noticias
+    const contenedor = document.getElementById("noticias-contenido");
+    if (!contenedor) return;
+
+    contenedor.innerHTML = ""; 
+
+    articulos.forEach(art => {
+        // 1. Contenedor principal de la noticia
+        const noticiaDiv = document.createElement("article");
+        noticiaDiv.className = "noticia-item";
+
+        // 2. Imagen (si está disponible)
+        if (art.urlToImage) {
+            const img = document.createElement("img");
+            img.src = art.urlToImage;
+            img.className = "noticia-img";
+            img.alt = "Imagen de noticia";
+            noticiaDiv.appendChild(img);
+        }
+
+        // 3. Título
+        const titulo = document.createElement("h6");
+        titulo.className = "noticia-titulo";
+        titulo.textContent = art.title;
+        noticiaDiv.appendChild(titulo);
+
+        // 4. Descripción breve
+        const descripcion = document.createElement("p");
+        descripcion.className = "noticia-desc";
+        descripcion.textContent = art.description || "No hay descripción disponible para esta noticia.";
+        noticiaDiv.appendChild(descripcion);
+
+        // 5. Footer (Timestamp y Enlace)
+        const footer = document.createElement("div");
+        footer.className = "noticia-footer";
+
+        //Hora de publicación
+        const tiempo = document.createElement("span");
+        tiempo.className = "noticia-fecha";
+        const fechaObj = new Date(art.publishedAt);
+        tiempo.textContent = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Enlace a noticia completa
+        const enlace = document.createElement("a");
+        enlace.className = "noticia-link";
+        enlace.href = art.url;
+        enlace.target = "_blank";
+        enlace.textContent = "Leer más:";
+
+        footer.appendChild(tiempo);
+        footer.appendChild(enlace);
+        noticiaDiv.appendChild(footer);
+
+        // Agregar la noticia completa al contenedor del panel
+        contenedor.appendChild(noticiaDiv);
+    });
+}
+
+async function cargarActualizarNoticias() {
+    const articulos = await obtenerNoticias();
+    if (articulos.length > 0) {
+        renderizarNoticias(articulos);
+    }else {
+        console.log("No se recibieron artículos.");
+    }
 }
