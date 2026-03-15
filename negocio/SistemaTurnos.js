@@ -22,16 +22,31 @@ const CONFIG_EDIFICIOS = {
 
 export class SistemaTurnos {
 	#juego;
+	#controladorCiudadanos;
 	#onActualizacion;
 	#intervalId;
 
-	constructor(juego, onActualizacion) {
+	constructor(juego, controladorCiudadanos, onActualizacion) {
 		if (!(juego instanceof Juego)) {
 			throw new Error("SistemaTurnos requiere una instancia valida de Juego");
 		}
 
+		// Compatibilidad: firma anterior constructor(juego, onActualizacion).
+		if (typeof controladorCiudadanos === "function" && onActualizacion === undefined) {
+			onActualizacion = controladorCiudadanos;
+			controladorCiudadanos = null;
+		}
+
 		if (typeof onActualizacion !== "function") {
 			throw new Error("onActualizacion debe ser una funcion");
+		}
+
+		if (
+			controladorCiudadanos !== null &&
+			controladorCiudadanos !== undefined &&
+			typeof controladorCiudadanos.procesarTurno !== "function"
+		) {
+			throw new Error("controladorCiudadanos debe implementar procesarTurno()");
 		}
 
 		if (!Number.isFinite(juego.tiempoPorTurno) || juego.tiempoPorTurno <= 0) {
@@ -39,6 +54,7 @@ export class SistemaTurnos {
 		}
 
 		this.#juego = juego;
+		this.#controladorCiudadanos = controladorCiudadanos ?? null;
 		this.#onActualizacion = onActualizacion;
 		this.#intervalId = null;
 	}
@@ -89,10 +105,20 @@ export class SistemaTurnos {
 	});
 
 	this._aplicarProduccionYConsumo(economia, totals);
-	this._aplicarFelicidadCiudadanos(totals.beneficioFelicidadTotal);
 	this._procesarMantenimiento(economia, totals.mantenimiento);
 
+	if (this.#controladorCiudadanos) {
+		// HU-13: creación, asignaciones y recálculo de felicidad por turno.
+		this.#controladorCiudadanos.procesarTurno();
+	} else {
+		// Fallback temporal para evitar regresión antes de integrar paso 4.
+		this._aplicarFelicidadCiudadanos(totals.beneficioFelicidadTotal);
+	}
+
 	const balance = (totals.produccionElectricidad + totals.produccionAgua + totals.ingresoTotal) - (totals.consumoElectricidad + totals.consumoAgua);
+	const estadisticasCiudadanos = this.#controladorCiudadanos && typeof this.#controladorCiudadanos.obtenerEstadisticas === "function"
+		? this.#controladorCiudadanos.obtenerEstadisticas()
+		: null;
 
 	this.#onActualizacion({
 		consumoElectricidad: totals.consumoElectricidad,
@@ -102,7 +128,8 @@ export class SistemaTurnos {
 		ingresoTotal: totals.ingresoTotal,
 		beneficioFelicidadTotal: totals.beneficioFelicidadTotal,
 		mantenimientoTotal: totals.mantenimiento,
-		balance
+		balance,
+		estadisticasCiudadanos
 	});
 
 	}

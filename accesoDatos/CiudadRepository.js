@@ -423,9 +423,7 @@ export class CiudadRepository {
 			alimento: this.#numeroSeguro(economiaRaw.alimento, 0)
 		};
 
-		const ciudadanos = Array.isArray(ciudadData.ciudadanos)
-			? ciudadData.ciudadanos
-			: [];
+		const ciudadanos = this.#normalizarCiudadanos(ciudadData.ciudadanos);
 
 		const turnoActual = Math.max(1, this.#numeroSeguro(ciudadData.turnoActual, 1));
 		const puntuacionAcumulada = Math.max(0, this.#numeroSeguro(ciudadData.puntuacionAcumulada, 0));
@@ -471,6 +469,62 @@ export class CiudadRepository {
 		}
 
 		return celdas;
+	}
+
+	#normalizarCiudadanos(ciudadanosRaw) {
+		// Garantiza un formato persistible y consistente para ciudadanos.
+		// Normaliza id/nombre/felicidad y guarda refs de vivienda/empleo en campos estables.
+		if (!Array.isArray(ciudadanosRaw)) {
+			return [];
+		}
+
+		return ciudadanosRaw
+			.filter((ciudadano) => ciudadano && typeof ciudadano === "object")
+			.map((ciudadano, index) => {
+				const id = String(ciudadano.id ?? `c-${index + 1}`);
+				const nombre = String(ciudadano.nombre ?? `Ciudadano ${index + 1}`);
+				const felicidad = Math.min(100, Math.max(0, this.#numeroSeguro(ciudadano.felicidad, 100)));
+
+				const viviendaRef = this.#extraerReferenciaEdificio(
+					ciudadano.viviendaRef ?? ciudadano.vivienda ?? null
+				);
+				const empleoRef = this.#extraerReferenciaEdificio(
+					ciudadano.empleoRef ?? ciudadano.empleo ?? null
+				);
+
+				return {
+					id,
+					nombre,
+					felicidad,
+					viviendaRef,
+					empleoRef,
+					// Compatibilidad con el formato previo (vivienda/empleo como referencia)
+					vivienda: viviendaRef,
+					empleo: empleoRef
+				};
+			});
+	}
+
+	#extraerReferenciaEdificio(value) {
+		// Extrae solo la referencia del edificio desde distintos formatos de entrada.
+		// Acepta id string/number u objeto con propiedad id.
+		if (value === null || value === undefined) {
+			return null;
+		}
+
+		if (typeof value === "string" && value.trim() !== "") {
+			return value.trim();
+		}
+
+		if (typeof value === "number") {
+			return String(value);
+		}
+
+		if (typeof value === "object" && value.id !== undefined && value.id !== null) {
+			return String(value.id);
+		}
+
+		return null;
 	}
 
 	#crearCeldasVacias(ancho, largo) {

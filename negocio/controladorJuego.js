@@ -9,8 +9,9 @@ import { EdificioIndustrial } from "../modelos/EdificioIndustrial.js";
 import { EdificioServicio } from "../modelos/EdificioServicio.js";
 import { PlantaUtilidad } from "../modelos/PlantaUtilidad.js";
 import { Parque } from "../modelos/Parque.js";
-import { CiudadRepository } from "../accesoDatos/ciudadRepository.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 import { SistemaTurnos } from "./SistemaTurnos.js";
+import { controladorCiudadanos } from "./controladorCiudadanos.js";
 import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
 import * as Rutas from "./controladorRutas.js";
 
@@ -45,6 +46,7 @@ const contadorServicios = document.getElementById("contadorServicios");
 const contadorIndustriales = document.getElementById("contadorIndustriales");
 const contadorParques = document.getElementById("contadorParques");
 const contadorVias = document.getElementById("contadorVias");
+const estadisticasCiudadanosLabel = document.getElementById("estadisticasCiudadanos");
 
 const MODOS_CONSTRUCCION = Object.freeze({
     NINGUNO: "NINGUNO",
@@ -175,23 +177,30 @@ function iniciarJuego() {
     mapa.celdas = data.mapa.celdas;
 
     const economia = new Economia(data.economia);
+    const ciudadanosPersistidos = Array.isArray(data.ciudadanos) ? data.ciudadanos : [];
+
     const ciudad = new Ciudad({
         id: data.idCiudad,
         nombre: data.nombre,
         region: data.region,
         mapa,
-        economia
+        economia,
+        ciudadanos: ciudadanosPersistidos
     });
 
     juego = new Juego({ ciudad });
+    rehidratarAsignacionesCiudadanos(ciudadanosPersistidos, juego.ciudad, mapa.celdas);
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
 
     renderizarCiudad();
     //setteamos para que juego este global en controladorRutas
     Rutas.setJuego(juego);
 
+    const sistemaCiudadanos = new controladorCiudadanos(juego);
+
     sistemaTurnos = new SistemaTurnos(
         juego,
+        sistemaCiudadanos,
         () => {
             guardarCiudad();
             renderizarCiudad();
@@ -242,6 +251,7 @@ function renderizarCiudad() {
     });
 
     actualizarContadorElementos();
+    actualizarEstadisticasCiudadanos();
 }
 
 //settea el modo y cambia el aspecto del cursor
@@ -617,6 +627,23 @@ function actualizarContadorElementos() {
     contadorVias.textContent = `vias: ${vias}`;
 }
 
+function actualizarEstadisticasCiudadanos() {
+    if (!estadisticasCiudadanosLabel || !juego?.ciudad) {
+        return;
+    }
+
+    const { ciudadanos } = juego.ciudad;
+    const total = ciudadanos.length;
+    const empleados = juego.ciudad.obtenerTotalEmpleados();
+    const desempleados = juego.ciudad.obtenerTotalDesempleados();
+    const felicidadPromedio = total === 0
+        ? 0
+        : Math.round(ciudadanos.reduce((sum, ciudadano) => sum + ciudadano.felicidad, 0) / total);
+
+    estadisticasCiudadanosLabel.textContent =
+        `Ciudadanos: ${total} | Empleados: ${empleados} | Desempleados: ${desempleados} | Felicidad promedio: ${felicidadPromedio}%`;
+}
+
 function tieneViaAdyacente(x, y) {
     const {celdas} = juego.ciudad.mapa;
     const maxY = celdas.length;
@@ -704,4 +731,110 @@ function guardarCiudad(){
     };
 
     ciudadRepository.guardarCiudadActual(dataCiudad);
+}
+
+function rehidratarAsignacionesCiudadanos(ciudadanosPersistidos, ciudad, celdas) {
+    // Reconstruye relaciones ciudadano -> vivienda/empleo usando refs guardadas.
+    // Se ejecuta al cargar partida para no perder ocupaciones entre recargas.
+    if (!Array.isArray(ciudadanosPersistidos) || ciudadanosPersistidos.length === 0) {
+        return;
+    }
+
+    const { residencialesPorId, productivosPorId } = construirIndiceEdificios(celdas);
+    const ciudadanosPorId = new Map(ciudad.ciudadanos.map((ciudadano) => [String(ciudadano.id), ciudadano]));
+
+    ciudadanosPersistidos.forEach((ciudadanoPersistido) => {
+        const ciudadano = ciudadanosPorId.get(String(ciudadanoPersistido.id));
+        if (!ciudadano) {
+            return;
+        }
+
+        const viviendaRef = normalizarReferenciaPersistida(ciudadanoPersistido.viviendaRef ?? ciudadanoPersistido.vivienda);
+        const empleoRef = normalizarReferenciaPersistida(ciudadanoPersistido.empleoRef ?? ciudadanoPersistido.empleo);
+
+        if (viviendaRef && residencialesPorId.has(viviendaRef)) {
+            const vivienda = residencialesPorId.get(viviendaRef);
+            if (!vivienda.residentes.includes(ciudadano)) {
+                vivienda.agregarResidente(ciudadano);
+            }
+            ciudadano.vivienda = vivienda;
+        }
+
+        if (empleoRef && productivosPorId.has(empleoRef)) {
+            const empleo = productivosPorId.get(empleoRef);
+            if (!empleo.empleados.includes(ciudadano)) {
+                empleo.agregarEmpleado(ciudadano);
+            }
+            ciudadano.empleo = empleo;
+        }
+    });
+}
+
+function construirIndiceEdificios(celdas) {
+    // Recorre el mapa y crea un indice por id de coordenada (edificio-y-x).
+    // El indice permite resolver refs persistidas sin buscar edificio por edificio cada vez.
+    const residencialesPorId = new Map();
+    const productivosPorId = new Map();
+
+    celdas.forEach((fila, y) => {
+        fila.forEach((subtipo, x) => {
+            const id = `edificio-${y}-${x}`;
+
+            if (subtipo === TipoResidencial.CASA.subtipo) {
+                residencialesPorId.set(id, new EdificioResidencial(id, TipoResidencial.CASA));
+                return;
+            }
+
+            if (subtipo === TipoResidencial.APARTAMENTO.subtipo) {
+                residencialesPorId.set(id, new EdificioResidencial(id, TipoResidencial.APARTAMENTO));
+                return;
+            }
+
+            if (subtipo === TipoComercial.TIENDA.subtipo) {
+                productivosPorId.set(id, new EdificioComercial(id, TipoComercial.TIENDA));
+                return;
+            }
+
+            if (subtipo === TipoComercial.CENTRO_COMERCIAL.subtipo) {
+                productivosPorId.set(id, new EdificioComercial(id, TipoComercial.CENTRO_COMERCIAL));
+                return;
+            }
+
+            if (subtipo === TipoIndustrial.FABRICA.subtipo) {
+                productivosPorId.set(id, new EdificioIndustrial(id, TipoIndustrial.FABRICA));
+                return;
+            }
+
+            if (subtipo === TipoIndustrial.GRANJA.subtipo) {
+                productivosPorId.set(id, new EdificioIndustrial(id, TipoIndustrial.GRANJA));
+            }
+        });
+    });
+
+    return {
+        residencialesPorId,
+        productivosPorId
+    };
+}
+
+function normalizarReferenciaPersistida(value) {
+    // Unifica referencias guardadas en distintos formatos (string, number u objeto con id).
+    // Si el valor no representa una referencia valida, retorna null.
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    if (typeof value === "string" && value.trim() !== "") {
+        return value.trim();
+    }
+
+    if (typeof value === "number") {
+        return String(value);
+    }
+
+    if (typeof value === "object" && value.id !== undefined && value.id !== null) {
+        return String(value.id);
+    }
+
+    return null;
 }
