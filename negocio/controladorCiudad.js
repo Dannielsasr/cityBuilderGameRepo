@@ -1,4 +1,4 @@
-import { CiudadRepository } from "../accesoDatos/ciudadRepository.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 
 const ciudadRepository = new CiudadRepository();
 
@@ -68,14 +68,7 @@ function procesarArchivoTexto(contenido) {
         ciudadanos: []
     };
 
-    localStorage.setItem(id, JSON.stringify(dataCiudad));
-    localStorage.setItem("ciudadActual", id);
-
-    let ciudades = JSON.parse(localStorage.getItem("ciudades")) || [];
-    if (!ciudades.includes(id)) {
-        ciudades.push(id);
-        localStorage.setItem("ciudades", JSON.stringify(ciudades));
-    }
+    ciudadRepository.guardarCiudad(dataCiudad, { setAsCurrent: true });
 
     return true; 
 }
