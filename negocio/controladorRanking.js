@@ -1,5 +1,5 @@
 import { RankingRepository } from "../accesoDatos/RankingRepository.js";
-import { CiudadRepository } from "../accesoDatos/ciudadRepository.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 
 const rankingRepository = new RankingRepository();
 const ciudadRepository = new CiudadRepository();
@@ -110,8 +110,8 @@ function reiniciarRanking(){
 
     if(!confirmacion) return;
 
-    //elimina todo el registro de juego.
-    localStorage.removeItem("citybuilder.currentCity.v1");
+    // Elimina el estado de ciudades usando la capa de persistencia.
+    ciudadRepository.eliminarConfiguracionInicial();
 
     location.reload();
 }

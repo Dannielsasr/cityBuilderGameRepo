@@ -9,7 +9,7 @@ import { EdificioIndustrial } from "../modelos/EdificioIndustrial.js";
 import { EdificioServicio } from "../modelos/EdificioServicio.js";
 import { PlantaUtilidad } from "../modelos/PlantaUtilidad.js";
 import { Parque } from "../modelos/Parque.js";
-import { CiudadRepository } from "../accesoDatos/ciudadRepository.js";
+import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 import { SistemaTurnos } from "./SistemaTurnos.js";
 import { controladorCiudadanos } from "./controladorCiudadanos.js";
 import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
