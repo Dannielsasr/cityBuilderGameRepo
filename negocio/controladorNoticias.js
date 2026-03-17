@@ -1,6 +1,6 @@
-import { NoticiasRepositorio } from "../accesoDatos/NoticiasRepositorio.js";
+import { NoticiasRepository } from "../accesoDatos/NoticiasRepository.js";
 
-const noticiasRepo = new NoticiasRepositorio();
+const noticiasRepo = new NoticiasRepository();
 
 export async function cargarActualizarNoticias() {
     const articulos = await noticiasRepo.obtenerNoticiasDesdeAPI();

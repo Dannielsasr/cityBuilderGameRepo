@@ -1,4 +1,4 @@
-export class NoticiasRepositorio {
+export class NoticiasRepository {
     constructor() {
         this.apiKey = 'cef654a6ffa14e18bf4b692f76e40a5c';
         this.baseUrl = 'https://newsapi.org/v2/everything';
@@ -14,7 +14,7 @@ export class NoticiasRepositorio {
             const datos = await respuesta.json();
             return datos.articles.slice(0, 5); 
         } catch (error) {
-            console.error("Error en NoticiasRepositorio:", error);
+            console.error("Error en NoticiasRepository:", error);
             return [];
         }
     }

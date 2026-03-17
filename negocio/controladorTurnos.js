@@ -20,15 +20,16 @@ const CONFIG_EDIFICIOS = {
     U2: TipoUtilidad.PLANTA_AGUA
 };
 
-export class SistemaTurnos {
+export class controladorTurnos {
 	#juego;
 	#controladorCiudadanos;
 	#onActualizacion;
 	#intervalId;
+	#pausado;
 
 	constructor(juego, controladorCiudadanos, onActualizacion) {
 		if (!(juego instanceof Juego)) {
-			throw new Error("SistemaTurnos requiere una instancia valida de Juego");
+			throw new Error("controladorTurnos requiere una instancia valida de Juego");
 		}
 
 		// Compatibilidad: firma anterior constructor(juego, onActualizacion).
@@ -57,6 +58,7 @@ export class SistemaTurnos {
 		this.#controladorCiudadanos = controladorCiudadanos ?? null;
 		this.#onActualizacion = onActualizacion;
 		this.#intervalId = null;
+		this.#pausado = false;
 	}
 
 	// Inicia el sistema de turnos, procesando un turno cada tiempoPorTurno segundos
@@ -64,6 +66,8 @@ export class SistemaTurnos {
 		if (this.#intervalId !== null) {
 			return;
 		}
+
+		this.#pausado = false;
 
 		this.#intervalId = setInterval(() => {
 			this.procesarTurno();
@@ -77,14 +81,32 @@ export class SistemaTurnos {
 
 		clearInterval(this.#intervalId);
 		this.#intervalId = null;
+		this.#pausado = true;
 	}
 
-	detener(){
-		this.pausar();
+	reanudar() {
+		if (!this.#pausado) {
+			return;
+		}
+
+		this.iniciar();
 	}
+
+	reiniciar() {
+    this.pausado = true;
+
+    if (this.intervalo) {
+        clearInterval(this.intervalo);
+        this.intervalo = null;
+    }
+
+    this.#juego.turnoActual = 0;
+
+    this.iniciar();
+}
 
 	procesarTurno(){
-
+	if(this.#pausado) return;
     const { celdas } = this.#juego.ciudad.mapa;
     const { economia } = this.#juego.ciudad;
 
@@ -117,6 +139,8 @@ export class SistemaTurnos {
 		this._aplicarFelicidadCiudadanos(totals.beneficioFelicidadTotal);
 	}
 
+	const alertas = this._verificarAlertas(economia);
+
 	this.#juego.turnoActual++;
 
 	const balance = (totals.produccionElectricidad + totals.produccionAgua + totals.ingresoTotal) - (totals.consumoElectricidad + totals.consumoAgua);
@@ -134,9 +158,9 @@ export class SistemaTurnos {
 		beneficioFelicidadTotal: totals.beneficioFelicidadTotal,
 		mantenimientoTotal: totals.mantenimiento,
 		balance,
-		estadisticasCiudadanos
+		estadisticasCiudadanos,
+		alertas
 	});
-
 	}
 
 
@@ -239,5 +263,35 @@ export class SistemaTurnos {
 
 			ciudadano.felicidad = nuevaFelicidad;
 		});
+	}
+
+	_verificarAlertas(economia){
+		const alertas = [];
+
+		if(economia.electricidad <= 20){
+			alertas.push("⚡ Tienes poca electricidad: " + economia.electricidad);
+		}
+
+		if(economia.agua <= 20){
+			alertas.push("💧 Tienes poca agua: " + economia.agua);
+		}
+
+		if(economia.dinero <= 20){
+			alertas.push("💰 Te estas quedando sin dinero: " + economia.dinero);
+		}
+
+		if((economia.alimento || 0) <= 20){
+			alertas.push("🌽 Tienes pocos alimentos: " + economia.alimento);
+		}
+
+		if(this.#controladorCiudadanos){
+			const stats = this.#controladorCiudadanos.obtenerEstadisticas();
+
+			if(stats.felicidadPromedio <= 20){
+				alertas.push("😡 Ciudadanos infelices");
+			}
+		}
+
+		return alertas;
 	}
 }

@@ -10,14 +10,15 @@ import { EdificioServicio } from "../modelos/EdificioServicio.js";
 import { PlantaUtilidad } from "../modelos/PlantaUtilidad.js";
 import { Parque } from "../modelos/Parque.js";
 import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
-import { SistemaTurnos } from "./SistemaTurnos.js";
+import { controladorTurnos } from "./controladorTurnos.js";
 import { controladorCiudadanos } from "./controladorCiudadanos.js";
 import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
 import * as Rutas from "./controladorRutas.js";
 import { cargarActualizarNoticias } from "./controladorNoticias.js";
 import { cargarActualizarClima } from "./controladorClima.js";
-import { COORDENADAS_REGIONES } from "../accesoDatos/ClimaRepositorio.js";
+import { COORDENADAS_REGIONES } from "../accesoDatos/ClimaRepository.js";
 
+window.addEventListener("DOMContentLoaded", iniciarJuego);
 
 //botones
 const btnCasa = document.getElementById("itemCasa");
@@ -36,12 +37,25 @@ const btnVia =  document.getElementById("itemVia");
 const btnDemoler =  document.getElementById("btnDemoler");
 const cerrarPanel = document.getElementById("cerrarPanel");
 const btnDemolerPanel = document.getElementById("btnDemolerPanel");
+const btnPausa = document.getElementById("pausado");
+const btnContinuar = document.getElementById("continuar");
+const btnReiniciar = document.getElementById("reiniciar");
 
 //grid | otros
 const mapaDiv = document.getElementById("mapa");
 const nombreCiudadTitulo = document.getElementById("nombreCiudad");
+const containerConfig = document.getElementById("container-config");
 
 //contadores
+
+const puntuacion = document.getElementById("puntaje");
+const dinero = document.getElementById("dinero");
+const totalAgua = document.getElementById("totalAgua");
+const totalElectricidad = document.getElementById("totalElectricidad");
+const totalAlimento = document.getElementById("totalAlimento");
+const promedioFelicidad = document.getElementById("promedioFelicidad");
+
+
 const contadorResidenciales = document.getElementById("contadorResidenciales");
 const contadorComerciales = document.getElementById("contadorComerciales");
 const contadorUtilidades = document.getElementById("contadorUtilidades");
@@ -89,10 +103,9 @@ let juego;
 let modo = "";
 let modoConstruccionActivo = MODOS_CONSTRUCCION.NINGUNO;
 let sistemaTurnos;
+let sistemaCiudadanos;
 let edificioSeleccionado = { x: null, y: null };
 const ciudadRepository = new CiudadRepository();
-
-window.addEventListener("DOMContentLoaded", iniciarJuego);
 
 document.getElementById("btnExportar").addEventListener("click", exportarCiudadJSON);
 
@@ -100,7 +113,7 @@ document.getElementById("btnRanking").addEventListener("click", () => {
     window.location.href = "/presentacion/vistas/ranking.html";
 });
 
-//esta parte es para captar los eventos, en caso de que algun boton se oprima, se redirecciona.
+
 btnCasa?.addEventListener("click", function() {
     activarModoConstruccion(MODOS_CONSTRUCCION.CASA);
 });
@@ -189,6 +202,53 @@ btnDemolerPanel?.addEventListener("click", function(){
 
 mapaDiv?.addEventListener("click", manejarClickMapa);
 
+
+function configurarEventosPausa() {
+
+    btnPausa?.addEventListener("click", () => {
+        console.log("PAUSAR", sistemaTurnos);
+
+        if (!sistemaTurnos) return;
+
+        sistemaTurnos.pausar();
+        //agregar oscurecimiento a la pagina
+        const overlay = document.createElement("div");
+        overlay.classList.add("overlay-pausa");
+        document.body.appendChild(overlay);
+
+        containerConfig.classList.add("activo");
+        containerConfig.style.display = "block";
+    });
+
+    btnContinuar?.addEventListener("click", () => {
+        console.log("REANUDAR", sistemaTurnos);
+
+        if (!sistemaTurnos) return;
+
+        sistemaTurnos.reanudar();
+        
+        document.querySelector(".overlay-pausa")?.remove();
+        containerConfig.classList.remove("activo");
+        containerConfig.style.display = "none";
+    });
+
+    btnReiniciar?.addEventListener("click", () => {
+        if (!sistemaTurnos) return;
+
+        const confirmar = confirm("¿Seguro que deseas borrar la ciudad actual?");
+        if (!confirmar) return;
+
+        sistemaTurnos.pausar();
+
+        ciudadRepository.eliminarCiudadActual();
+
+        containerConfig.style.display = "none";
+        btnPausa.disabled = false;
+
+        window.location.reload();
+    });
+}
+
 async function iniciarJuego() {
     const data = ciudadRepository.obtenerCiudadActual();
 
@@ -236,18 +296,23 @@ if (coordenadas) {
     //setteamos para que juego este global en controladorRutas
     Rutas.setJuego(juego);
 
-    const sistemaCiudadanos = new controladorCiudadanos(juego);
+    sistemaCiudadanos = new controladorCiudadanos(juego);
 
-    sistemaTurnos = new SistemaTurnos(
+    sistemaTurnos = new controladorTurnos(
         juego,
         sistemaCiudadanos,
-        () => {
+        (alertData) => {
             guardarCiudad();
             renderizarCiudad();
+
+            if (Array.isArray(alertData.alertas) && alertData.alertas.length > 0) {
+                alert(alertData.alertas.join("\n"));
+            }
         }
     );
 
     sistemaTurnos.iniciar();
+    configurarEventosPausa();
 }
 
 function manejarClickMapa(e){
@@ -290,6 +355,7 @@ function renderizarCiudad() {
         });
     });
 
+    actualizarRecursos(juego);
     actualizarContadorElementos();
     actualizarEstadisticasCiudadanos();
 }
@@ -616,6 +682,17 @@ function obtenerTipoPorSubtipo(subtipo){
 
     //busca dentro del arreglo todos el primero que coincida en el subtipo.
     return todos.find(tipo => tipo.subtipo === subtipo);
+}
+
+function actualizarRecursos(juego){
+    sistemaCiudadanos = new controladorCiudadanos(juego);
+    let {ciudadanos} = juego.ciudad;
+    puntuacion.textContent = `${juego.puntuacionAcumulada}`;
+    dinero.textContent = `${juego.ciudad.economia.dinero}`;
+    totalAgua.textContent = `${juego.ciudad.economia.agua}`;
+    totalElectricidad.textContent = `${juego.ciudad.economia.electricidad}`;
+    totalAlimento.textContent = `${juego.ciudad.economia.alimento}`;
+    promedioFelicidad.textContent = `${sistemaCiudadanos.obtenerFelicidadPromedio(ciudadanos)}`;
 }
 
 //este metodo simplemente actualiza los contadores de los elementos en pantalla.
@@ -997,6 +1074,8 @@ function construirJSONCiudad(ciudad){
         });
     });
 
+    const coordenadas = COORDENADAS_REGIONES[ciudad.region] || { lat: 0, lon: 0 };
+
     return {
 
         cityName: ciudad.nombre,
@@ -1009,11 +1088,10 @@ function construirJSONCiudad(ciudad){
 
         //todavia nos falta conectarlo con la INFO DE API CLIMA
         coordinates:{
-            lat: 4.6097,
-            lon: -74.0817
+            lat: coordenadas.lat,
+            lon: coordenadas.lon
         },
 
-        //Se debe relacionar pero con un atributo que cuente todos los turnos (NO EL ACTUAL)
         turn: ciudad.turnoActual,
         score: ciudad.puntuacionAcumulada,
 

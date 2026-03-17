@@ -198,6 +198,25 @@ export class CiudadRepository {
 		this.#storage.removeItem("ciudades");
 	}
 
+	eliminarCiudadActual() {
+    const state = this.#cargarEstado();
+
+    const currentId = state.currentCityId;
+
+    if (!currentId) return;
+
+    //elimina la ciudad
+    delete state.cities[currentId];
+
+    // elimina de la lista de id's
+    state.cityIds = state.cityIds.filter(id => id !== currentId);
+
+    // limpia la ciudad actual
+    state.currentCityId = null;
+
+    this.#guardarEstado(state);
+}
+
 	#estadoVacio() {
 		// Estructura canonica v2 de almacenamiento.
 		return {

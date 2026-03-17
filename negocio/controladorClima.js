@@ -1,6 +1,6 @@
-import { ClimaRepositorio } from "../accesoDatos/ClimaRepositorio.js";
+import { ClimaRepository } from "../accesoDatos/ClimaRepository.js";
 
-const climaRepo = new ClimaRepositorio();
+const climaRepo = new ClimaRepository();
 
 export async function cargarActualizarClima(coords) {
     const clima = await climaRepo.obtenerClimaDesdeAPI(coords.lat, coords.lon);

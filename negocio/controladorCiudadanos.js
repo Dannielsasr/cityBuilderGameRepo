@@ -96,7 +96,7 @@ export class controladorCiudadanos{
         const desempleados = ciudad.obtenerTotalDesempleados();
         const felicidadPromedio = total === 0
             ? 0
-            : Math.round(ciudadanos.reduce((sum, c) => sum + c.felicidad, 0) / total);
+            : this.obtenerFelicidadPromedio(ciudadanos);
 
         return { total, empleados, desempleados, felicidadPromedio };
     }
@@ -289,4 +289,10 @@ export class controladorCiudadanos{
 
         return Math.max(...ids);
     }
+
+    obtenerFelicidadPromedio(ciudadanos){
+    return Math.round(
+        ciudadanos.reduce((sum, c) => sum + c.felicidad, 0) / ciudadanos.length
+    );
+}
 }

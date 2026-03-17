@@ -5,7 +5,7 @@ export const COORDENADAS_REGIONES = {
     "4": { lat: 4.1420, lon: -73.6266 },  // Orinoquía (Villavicencio)
     "5": { lat: -4.2153, lon: -69.9406 }  // Amazonía (Leticia)
 };
-export class ClimaRepositorio {
+export class ClimaRepository {
     constructor() {
         this.apiKey = 'e23751d05ee5b72f2d4de20d6ae1928d';
         this.baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
@@ -28,7 +28,7 @@ export class ClimaRepositorio {
                 icono: `https://openweathermap.org/img/wn/${datos.weather[0].icon}@2x.png`
             };
         } catch (error) {
-            console.error("Error en ClimaRepositorio:", error);
+            console.error("Error en ClimaRepository:", error);
             return null;
         }
     }

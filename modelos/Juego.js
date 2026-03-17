@@ -52,7 +52,7 @@ export class Juego{
     }
 
     set turnoActual(valor){
-        if(valor < 1){
+        if(valor < 0){
             throw new Error("El turno actual es negativo");
         }
         this.#turnoActual = valor
