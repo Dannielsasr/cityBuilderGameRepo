@@ -12,13 +12,6 @@
             <h3 id="nombreCiudad" class="text-center my-4"> Una ciudad </h3>
             
             <div class="container-labels">
-                <label id="contadorResidenciales" class="text-center fw-semibold">Residenciales: 0 (Casas: 0, Apartamentos: 0)</label>
-                <label id="contadorComerciales" class="text-center fw-semibold">Comerciales: 0 (Tiendas: 0, Malls: 0)</label>
-                <label id="contadorIndustriales" class="text-center fw-semibold">Industriales: 0 (Fabricas: 0, Granjas: 0)</label>
-                <label id="contadorServicios" class="text-center fw-semibold">Servicios: 0 (Estaciones policia: 0, Estaciones Bombero: 0, Hospitales: 0)</label>
-                <label id="contadorUtilidades" class="text-center fw-semibold">Utilidades: 0 (Plantas electricas: 0, Plantas agua: 0)</label>
-                <label id="contadorParques" class="text-center fw-semibold">parques: 0</label>
-                <label id="contadorVias" class="text-center fw-semibold">vias: 0</label>
                 <label id="estadisticasCiudadanos" class="text-center fw-semibold">Ciudadanos: 0 | Residentes: 0 | No residentes: 0 | Empleados: 0 | Desempleados: 0 | Felicidad promedio: 0%</label>
             </div>
             <button id="btnRanking" type="button" class="btn btn-light">🏆 Mostrar ranking</button>
@@ -142,12 +135,12 @@
                             <div id="estadisticas-contenido">
                                 <div class="list-group list-group-flush">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted small">puntaje</span>
-                                        <span id="puntaje">a</span>
+                                        <span class="text-muted small">Puntaje</span>
+                                        <span id="puntaje">0</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted small">Dinero</span>
-                                        <span id="dinero" class="fw-bold">0</span>
+                                        <span id="dinero" class="fw-bold">50000</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted small">Agua</span>
@@ -155,25 +148,68 @@
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted small">Comida</span>
-                                        <span id="totalComida">100%</span>
+                                        <span id="totalComida">0</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted small">electricidad:</span>
-                                        <span id="totalElectricidad">a</span>
+                                        <span id="totalElectricidad">0</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted small">Felicidad:</span>
-                                        <span id="promedioFelicidad">a</span>
+                                        <span id="promedioFelicidad">0</span>
                                     </div>
-                                    
+                                    <!-- contadores -->
                                     <div class="mt-2 pt-2 border-top">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="text-muted small fw-bold">Total Residenciales</span>
-                                            <span id="numResidencialTotal" class="fw-bold text-primary">0</span>
+                                            <span id="contadorResidenciales" class="fw-bold text-primary">0</span>
                                         </div>
                                         <div class="d-flex justify-content-between mt-1">
-                                            <span class="text-muted extra-small">Casas: <span id="numCasas" class="text-dark">0</span></span>
-                                            <span class="text-muted extra-small">Aptos: <span id="numApartamentos" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Casas: <span id="contadorCasas" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Aptos: <span id="contadorApartamentos" class="text-dark">0</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Comerciales</span>
+                                            <span id="contadorComerciales" class="fw-bold text-primary">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="text-muted extra-small">Tiendas: <span id="contadorTiendas" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Malls: <span id="contadorMalls" class="text-dark">0</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Industriales</span>
+                                            <span id="contadorIndustriales" class="fw-bold text-primary">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="text-muted extra-small">Fabricas: <span id="contadorFabricas" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Granjas: <span id="contadorGranjas" class="text-dark">0</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Servicios</span>
+                                            <span id="contadorServicios" class="fw-bold text-primary">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="text-muted extra-small">Policias: <span id="contadorPolicias" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Bomberos: <span id="contadorBomberos" class="text-dark">0</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="text-muted extra-small">Hospitales: <span id="contadorHospitales" class="text-dark">0</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Utilidades</span>
+                                            <span id="contadorUtilidades" class="fw-bold text-primary">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="text-muted extra-small">Pl. Electricas: <span id="contadorElectricas" class="text-dark">0</span></span>
+                                            <span class="text-muted extra-small">Pl. Agua: <span id="contadorAgua" class="text-dark">0</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Parques</span>
+                                            <span id="contadorParques" class="fw-bold text-primary">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small fw-bold">Total Vias</span>
+                                            <span id="contadorVias" class="fw-bold text-primary">0</span>
                                         </div>
                                     </div>
                                 </div>

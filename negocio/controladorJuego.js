@@ -49,6 +49,22 @@ const contadorServicios = document.getElementById("contadorServicios");
 const contadorIndustriales = document.getElementById("contadorIndustriales");
 const contadorParques = document.getElementById("contadorParques");
 const contadorVias = document.getElementById("contadorVias");
+
+const contadorCasas = document.getElementById("contadorCasas");
+const contadorApartamentos = document.getElementById("contadorApartamentos");
+
+const contadorTiendas = document.getElementById("contadorTiendas");
+const contadorMalls = document.getElementById("contadorMalls");
+
+const contadorFabricas = document.getElementById("contadorFabricas");
+const contadorGranjas = document.getElementById("contadorGranjas");
+
+const contadorPolicias = document.getElementById("contadorPolicias");
+const contadorBomberos = document.getElementById("contadorBomberos");
+const contadorHospitales = document.getElementById("contadorHospitales");
+
+const contadorElectricas = document.getElementById("contadorElectricas");
+const contadorAgua = document.getElementById("contadorAgua");
 const estadisticasCiudadanosLabel = document.getElementById("estadisticasCiudadanos");
 
 const MODOS_CONSTRUCCION = Object.freeze({
@@ -671,18 +687,34 @@ function actualizarContadorElementos() {
     });
 
     const totalResidenciales = casas + apartamentos;
-    const totalComeciales = tiendas + malls;
+    const totalComerciales = tiendas + malls;
     const totalIndustriales = fabricas + granjas;
     const totalServicios = policias + bomberos + hospitales;
     const totalUtilidades = plantasElectricidad + plantasAgua;
 
-    contadorResidenciales.textContent = `Residenciales: ${totalResidenciales} (Casas: ${casas}, Apartamentos: ${apartamentos})`;
-    contadorComerciales.textContent = `Comerciales: ${totalComeciales} (Tiendas: ${tiendas}, Malls: ${malls})`;;
-    contadorIndustriales.textContent = `Industriales: ${totalIndustriales} (Fabricas: ${fabricas}, Granjas: ${granjas})`;
-    contadorServicios.textContent = `Servicios: ${totalServicios} (Estaciones Policia: ${policias}, Estaciones Bombero: ${bomberos}, Hospitales: ${hospitales})`;
-    contadorUtilidades.textContent = `Utilidades: ${totalUtilidades} (Plantas electricas: ${plantasElectricidad}, Plantas agua: ${plantasAgua})`;
-    contadorParques.textContent = `parques: ${parques}`;
-    contadorVias.textContent = `vias: ${vias}`;
+    contadorResidenciales.textContent = `${totalResidenciales}`;
+    contadorComerciales.textContent = `${totalComerciales}`;;
+    contadorIndustriales.textContent = `${totalIndustriales}`;
+    contadorServicios.textContent = `${totalServicios} `;
+    contadorUtilidades.textContent = `${totalUtilidades}`;
+    contadorParques.textContent = `${parques}`;
+    contadorVias.textContent = `${vias}`;
+
+    contadorCasas.textContent = `${casas}`;
+    contadorApartamentos.textContent = `${apartamentos}`;
+
+    contadorTiendas.textContent = `${tiendas}`;
+    contadorMalls.textContent = `${malls}`;
+
+    contadorFabricas.textContent = `${fabricas}`;
+    contadorGranjas.textContent = `${granjas}`;
+
+    contadorPolicias.textContent = `${policias}`;
+    contadorBomberos.textContent = `${bomberos}`;
+    contadorHospitales.textContent = `${hospitales}`;
+
+    contadorElectricas.textContent = `${plantasElectricidad}`;
+    contadorAgua.textContent = `${plantasAgua}`;
 }
 
 function actualizarEstadisticasCiudadanos() {
