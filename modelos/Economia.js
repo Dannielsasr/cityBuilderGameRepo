@@ -6,7 +6,7 @@ export class Economia{
     #alimento;
 
     constructor({
-        dinero = 50000,
+        dinero = 500000,
         electricidad = 0,
         agua = 0,
         alimento = 0

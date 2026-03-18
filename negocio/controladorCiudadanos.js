@@ -9,6 +9,8 @@ import { TipoResidencial, TipoComercial, TipoIndustrial } from "../modelos/Enums
 const CONFIG_DEFECTO = Object.freeze({
     minCrecimiento: 1,          // mínimo ciudadanos creados por turno
     maxCrecimiento: 3,          // máximo ciudadanos creados por turno
+    umbralFelicidadCrecimiento: 60,
+    requerirEmpleoDisponible: true,
     alpha: 0.3,                 // velocidad de convergencia de felicidad (0‑1)
     BASE_FELICIDAD: 40,
     BONO_VIVIENDA: 20,
@@ -38,7 +40,9 @@ const SUBTIPOS_INDUSTRIAL = new Map([
     ["I2", TipoIndustrial.GRANJA]
 ]);
 
-const SUBTIPOS_SERVICIOS = new Set(["S1", "S2", "S3"]);
+const SUBTIPOS_POLICIA = new Set(["S1"]);
+const SUBTIPOS_BOMBEROS = new Set(["S2"]);
+const SUBTIPOS_HOSPITAL = new Set(["S3"]);
 const SUBTIPOS_PARQUES   = new Set(["P1"]);
 
 // ─── Clase principal ───────────────────────────────────────────────────────────
@@ -69,7 +73,7 @@ export class controladorCiudadanos{
 
     /**
      * Ejecuta toda la lógica de ciudadanos para un turno:
-     * 1. Crea ciudadanos si hay vivienda disponible.
+        * 1. Crea ciudadanos si se cumplen reglas de crecimiento (vivienda/felicidad/empleo).
      * 2. Asigna vivienda a sin hogar (incluye recién creados).
      * 3. Asigna empleo a desempleados.
      * 4. Recalcula felicidad con la fórmula completa.
@@ -107,8 +111,24 @@ export class controladorCiudadanos{
         const capacidadLibre = this._calcularCapacidadResidencialLibre(celdas, ciudad);
         if (capacidadLibre <= 0) return;
 
-        // Limitar el máximo al espacio real disponible
-        const maxEfectivo = Math.min(capacidadLibre, this.#config.maxCrecimiento);
+        const vacantesReales = this.#config.requerirEmpleoDisponible
+            ? this._calcularVacantesLaboralesReales(celdas, ciudad)
+            : Number.POSITIVE_INFINITY;
+
+        if (this.#config.requerirEmpleoDisponible && vacantesReales <= 0) return;
+
+        // Caso borde HU-13: ciudad vacía puede iniciar primera ola si hay vivienda + empleo.
+        const totalCiudadanos = ciudad.ciudadanos.length;
+        if (totalCiudadanos > 0) {
+            const felicidadPromedio = this.obtenerFelicidadPromedio(ciudad.ciudadanos);
+            if (felicidadPromedio <= this.#config.umbralFelicidadCrecimiento) return;
+        }
+
+        // Limitar creación por capacidad residencial y vacantes laborales reales.
+        const limitePorCapacidadYEmpleo = Math.min(capacidadLibre, vacantesReales);
+        const maxEfectivo = Math.min(limitePorCapacidadYEmpleo, this.#config.maxCrecimiento);
+        if (maxEfectivo <= 0) return;
+
         const minEfectivo = Math.min(this.#config.minCrecimiento, maxEfectivo);
         const cantidad    = this._aleatorioEntre(minEfectivo, maxEfectivo);
 
@@ -143,7 +163,7 @@ export class controladorCiudadanos{
     }
 
     _actualizarFelicidades(celdas, ciudad) {
-        const numServicios = this._contarCeldas(celdas, SUBTIPOS_SERVICIOS);
+        const numServicios = this._calcularServiciosEfectivos(celdas, ciudad.economia);
         const numParques   = this._contarCeldas(celdas, SUBTIPOS_PARQUES);
         const { economia } = ciudad;
 
@@ -181,6 +201,29 @@ export class controladorCiudadanos{
         return Math.min(100, Math.max(0, hObj));
     }
 
+    _calcularServiciosEfectivos(celdas, economia) {
+        const cantidadPolicia = this._contarCeldas(celdas, SUBTIPOS_POLICIA);
+        const cantidadBomberos = this._contarCeldas(celdas, SUBTIPOS_BOMBEROS);
+        const cantidadHospital = this._contarCeldas(celdas, SUBTIPOS_HOSPITAL);
+
+        const tieneElectricidad = (economia.electricidad || 0) > 0;
+        const tieneAgua = (economia.agua || 0) > 0;
+
+        const factorPoliciaBomberos = tieneElectricidad ? 1 : 0;
+        let factorHospital = 0;
+        if (tieneElectricidad && tieneAgua) {
+            factorHospital = 1;
+        } else if (tieneElectricidad || tieneAgua) {
+            factorHospital = 0.5;
+        }
+
+        return (
+            (cantidadPolicia * factorPoliciaBomberos) +
+            (cantidadBomberos * factorPoliciaBomberos) +
+            (cantidadHospital * factorHospital)
+        );
+    }
+
     /**
      * Capacidad total del mapa menos ciudadanos existentes.
      * Garantiza que nunca creemos más ciudadanos de los que caben.
@@ -194,6 +237,35 @@ export class controladorCiudadanos{
             }
         }
         return capacidadTotal - ciudad.ciudadanos.length;
+    }
+
+    /**
+     * Vacantes efectivas para crear nuevos ciudadanos:
+     * (vacantes laborales actuales) - (desempleados actuales)
+     */
+    _calcularVacantesLaboralesReales(celdas, ciudad) {
+        let capacidadLaboralTotal = 0;
+
+        for (const fila of celdas) {
+            for (const subtipo of fila) {
+                const tipoComercial = SUBTIPOS_COMERCIAL.get(subtipo);
+                if (tipoComercial) {
+                    capacidadLaboralTotal += tipoComercial.empleos;
+                    continue;
+                }
+
+                const tipoIndustrial = SUBTIPOS_INDUSTRIAL.get(subtipo);
+                if (tipoIndustrial) {
+                    capacidadLaboralTotal += tipoIndustrial.empleos;
+                }
+            }
+        }
+
+        const empleadosActuales = ciudad.obtenerTotalEmpleados();
+        const vacantesLaborales = Math.max(0, capacidadLaboralTotal - empleadosActuales);
+        const desempleadosActuales = ciudad.obtenerTotalDesempleados();
+
+        return Math.max(0, vacantesLaborales - desempleadosActuales);
     }
 
     /**
