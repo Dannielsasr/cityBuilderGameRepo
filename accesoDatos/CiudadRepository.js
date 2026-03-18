@@ -51,7 +51,7 @@ export class CiudadRepository {
 				celdas: this.#crearCeldasVacias(normalized.tamanoMapa, normalized.tamanoMapa)
 			},
 			economia: {
-				dinero: 50000,
+				dinero: 500000,
 				electricidad: 0,
 				agua: 0,
 				alimento: 0
@@ -434,7 +434,7 @@ export class CiudadRepository {
 		// Compatibilidad: economia actual o recursosIniciales legacy.
 		const economiaRaw = ciudadData.economia ?? ciudadData.recursosIniciales ?? {};
 		const economia = {
-			dinero: this.#numeroSeguro(economiaRaw.dinero, 50000),
+			dinero: this.#numeroSeguro(economiaRaw.dinero, 500000),
 			electricidad: this.#numeroSeguro(economiaRaw.electricidad, 0),
 			agua: this.#numeroSeguro(economiaRaw.agua, 0),
 			alimento: this.#numeroSeguro(economiaRaw.alimento, 0)

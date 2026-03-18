@@ -20,14 +20,19 @@ const CONFIG_EDIFICIOS = {
     U2: TipoUtilidad.PLANTA_AGUA
 };
 
+const CONFIG_TURNOS_DEFECTO = Object.freeze({
+	consumoAlimentoPorCiudadano: 1
+});
+
 export class controladorTurnos {
 	#juego;
 	#controladorCiudadanos;
 	#onActualizacion;
 	#intervalId;
 	#pausado;
+	#config;
 
-	constructor(juego, controladorCiudadanos, onActualizacion) {
+	constructor(juego, controladorCiudadanos, onActualizacion, config = {}) {
 		if (!(juego instanceof Juego)) {
 			throw new Error("controladorTurnos requiere una instancia valida de Juego");
 		}
@@ -59,6 +64,7 @@ export class controladorTurnos {
 		this.#onActualizacion = onActualizacion;
 		this.#intervalId = null;
 		this.#pausado = false;
+		this.#config = { ...CONFIG_TURNOS_DEFECTO, ...config };
 	}
 
 	// Inicia el sistema de turnos, procesando un turno cada tiempoPorTurno segundos
@@ -107,43 +113,62 @@ export class controladorTurnos {
 
 	procesarTurno(){
 	if(this.#pausado) return;
-    const { celdas } = this.#juego.ciudad.mapa;
-    const { economia } = this.#juego.ciudad;
+	const { ciudad } = this.#juego;
+	const { celdas } = ciudad.mapa;
+	const { economia } = ciudad;
+	const estadoRecursosInicio = this._obtenerEstadoRecursosInicio(economia);
 
 	let totals = {
 		produccionElectricidad: 0,
 		produccionAgua: 0,
+		produccionAlimento: 0,
 		consumoElectricidad: 0,
 		consumoAgua: 0,
+		consumoAlimento: 0,
 		ingresoTotal: 0,
 		beneficioFelicidadTotal: 0,
 		mantenimiento: 0
 	};
 
+	// 1) Calcular produccion/consumo por edificios segun reglas operativas.
 	celdas.forEach(fila => {
 		fila.forEach(subtipo => {
-			this._procesarCelda(subtipo, economia, totals);
-			this._aplicarProduccionComerciales(subtipo, economia);
+			this._procesarCelda(subtipo, totals, estadoRecursosInicio);
 		});
 	});
-	console.log(economia + " <- eco y dinero ->" + economia.dinero);
 
-	this._aplicarProduccionYConsumo(economia, totals);
+	// 2) Consumo de alimento por ciudadano: poblacion * Z.
+	totals.consumoAlimento = ciudad.ciudadanos.length * Math.max(0, this.#config.consumoAlimentoPorCiudadano);
+
+	// 3) Aplicar balance de recursos (produccion - consumo).
+	this._aplicarBalanceRecursos(economia, totals);
+
+	// 4) Aplicar mantenimiento.
 	this._procesarMantenimiento(economia, totals.mantenimiento);
 
+	// 5) Procesar felicidad y poblacion.
 	if (this.#controladorCiudadanos) {
-		// HU-13: creación, asignaciones y recálculo de felicidad por turno.
 		this.#controladorCiudadanos.procesarTurno();
 	} else {
-		// Fallback temporal para evitar regresión antes de integrar paso 4.
 		this._aplicarFelicidadCiudadanos(totals.beneficioFelicidadTotal);
 	}
 
+	// 6) Notificaciones.
 	const alertas = this._verificarAlertas(economia);
 
 	this.#juego.turnoActual++;
 
-	const balance = (totals.produccionElectricidad + totals.produccionAgua + totals.ingresoTotal) - (totals.consumoElectricidad + totals.consumoAgua);
+	const balance = (
+		totals.produccionElectricidad +
+		totals.produccionAgua +
+		totals.produccionAlimento +
+		totals.ingresoTotal
+	) - (
+		totals.consumoElectricidad +
+		totals.consumoAgua +
+		totals.consumoAlimento
+	);
+
 	const estadisticasCiudadanos = this.#controladorCiudadanos && typeof this.#controladorCiudadanos.obtenerEstadisticas === "function"
 		? this.#controladorCiudadanos.obtenerEstadisticas()
 		: null;
@@ -152,8 +177,10 @@ export class controladorTurnos {
 		turnoActual: this.#juego.turnoActual,
 		consumoElectricidad: totals.consumoElectricidad,
 		consumoAgua: totals.consumoAgua,
+		consumoAlimento: totals.consumoAlimento,
 		produccionElectricidad: totals.produccionElectricidad,
 		produccionAgua: totals.produccionAgua,
+		produccionAlimento: totals.produccionAlimento,
 		ingresoTotal: totals.ingresoTotal,
 		beneficioFelicidadTotal: totals.beneficioFelicidadTotal,
 		mantenimientoTotal: totals.mantenimiento,
@@ -164,7 +191,7 @@ export class controladorTurnos {
 	}
 
 
-	_procesarCelda(subtipo, economia, totals){
+	_procesarCelda(subtipo, totals, estadoRecursosInicio){
 		if(subtipo === "P1"){
 			totals.beneficioFelicidadTotal += 5;
 			return;
@@ -175,46 +202,95 @@ export class controladorTurnos {
 
 		totals.mantenimiento += tipo.costoMantenimiento || 0;
 
-		totals.consumoElectricidad += tipo.consumoElectricidad || 0;
-		totals.consumoAgua += tipo.consumoAgua || 0;
+		const factorOperacion = this._calcularFactorOperacion(subtipo, estadoRecursosInicio);
+		if (factorOperacion <= 0) {
+			return;
+		}
 
-		this._procesarProduccion(tipo, economia, totals);
+		totals.consumoElectricidad += (tipo.consumoElectricidad || 0) * factorOperacion;
+		totals.consumoAgua += (tipo.consumoAgua || 0) * factorOperacion;
+
+		this._procesarProduccion(tipo, totals, factorOperacion);
 
 		if(tipo.beneficioFelicidad){
-			totals.beneficioFelicidadTotal += tipo.beneficioFelicidad;
+			totals.beneficioFelicidadTotal += tipo.beneficioFelicidad * factorOperacion;
 		}
 	}
 
-	_procesarIngreso
+	_calcularFactorOperacion(subtipo, estadoRecursosInicio){
+		const { electricidadDisponible, aguaDisponible, electricidadSuficientePlantaAgua } = estadoRecursosInicio;
 
-	_procesarProduccion(tipo, economia, totals){
-		if(!tipo.produccionPorTurno) return;
+		if (subtipo === "C1" || subtipo === "C2") {
+			return electricidadDisponible ? 1 : 0;
+		}
+
+		if (subtipo === "U2") {
+			return electricidadSuficientePlantaAgua ? 1 : 0;
+		}
+
+		if (subtipo === "I1") {
+			if (electricidadDisponible && aguaDisponible) return 1;
+			if (electricidadDisponible || aguaDisponible) return 0.5;
+			return 0;
+		}
+
+		if (subtipo === "I2") {
+			return aguaDisponible ? 1 : 0;
+		}
+
+		if (subtipo === "S1" || subtipo === "S2") {
+			return electricidadDisponible ? 1 : 0;
+		}
+
+		if (subtipo === "S3") {
+			if (electricidadDisponible && aguaDisponible) return 1;
+			if (electricidadDisponible || aguaDisponible) return 0.5;
+			return 0;
+		}
+
+		return 1;
+	}
+
+	_obtenerEstadoRecursosInicio(economia){
+		const electricidadActual = Number(economia.electricidad) || 0;
+		const aguaActual = Number(economia.agua) || 0;
+		const consumoPlantaAgua = TipoUtilidad.PLANTA_AGUA.consumoElectricidad || 0;
+
+		return {
+			electricidadDisponible: electricidadActual > 0,
+			aguaDisponible: aguaActual > 0,
+			electricidadSuficientePlantaAgua: electricidadActual >= consumoPlantaAgua
+		};
+	}
+
+	_procesarProduccion(tipo, totals, factorOperacion){
+		if (!tipo.produccionPorTurno && tipo.ingresoPorTurno === undefined) return;
 
 		const esEnergia = tipo.tipoProduccion === "ELECTRICIDAD";
 		const esAgua = tipo.tipoProduccion === "AGUA";
 		const esDinero = tipo.tipoProduccion === "DINERO";
 		const esAlimentos = tipo.tipoProduccion === "ALIMENTOS";
+		const produccionActual = (tipo.produccionPorTurno || 0) * factorOperacion;
+		const ingresoActual = (tipo.ingresoPorTurno || 0) * factorOperacion;
 
 		if(esEnergia){
-			totals.produccionElectricidad += tipo.produccionPorTurno;
+			totals.produccionElectricidad += produccionActual;
 		}
 
 		if(esAgua){
-			totals.produccionAgua += tipo.produccionPorTurno;
-		}
-
-		const escasezRecursos = economia.agua === 0 || economia.electricidad === 0;
-		let produccionActual = tipo.produccionPorTurno;
-		if((esDinero || esAlimentos) && escasezRecursos){
-			produccionActual *= 0.5;
+			totals.produccionAgua += produccionActual;
 		}
 
 		if(esDinero){
 			totals.ingresoTotal += produccionActual;
 		}
 
+		if (ingresoActual > 0) {
+			totals.ingresoTotal += ingresoActual;
+		}
+
 		if(esAlimentos){
-			economia.alimento = (economia.alimento || 0) + produccionActual;
+			totals.produccionAlimento += produccionActual;
 		}
 	}
 
@@ -222,29 +298,21 @@ export class controladorTurnos {
 		economia.dinero -= mantenimientoTotal;
 	}
 
-	_aplicarProduccionYConsumo(economia, totals){
+	_aplicarBalanceRecursos(economia, totals){
 		//produccion
 		economia.electricidad += totals.produccionElectricidad;
 		economia.agua += totals.produccionAgua;
+		economia.alimento = (economia.alimento || 0) + totals.produccionAlimento;
 		economia.dinero += totals.ingresoTotal;
 
 		//consumo
 		const aplicadoElectricidad = Math.min(economia.electricidad, totals.consumoElectricidad);
 		const aplicadoAgua = Math.min(economia.agua, totals.consumoAgua);
+		const aplicadoAlimento = Math.min(economia.alimento, totals.consumoAlimento);
 
 		economia.electricidad -= aplicadoElectricidad;
 		economia.agua -= aplicadoAgua;
-	}
-
-	_aplicarProduccionComerciales(subtipo, economia){
-		// if(subtipo !== "C1" || subtipo !== "C2"){
-		// 	return;
-		// }
-		const tipo = CONFIG_EDIFICIOS[subtipo];
-		if(!tipo) return;
-		console.log(tipo);
-		console.log("este es el ingreso de comerciales: " + tipo.ingresoPorTurno);
-		economia.dinero += tipo.ingresoPorTurno === undefined? 0 : tipo.ingresoPorTurno;;
+		economia.alimento -= aplicadoAlimento;
 	}
 
 
@@ -268,20 +336,20 @@ export class controladorTurnos {
 	_verificarAlertas(economia){
 		const alertas = [];
 
-		if(economia.electricidad <= 20){
-			alertas.push("⚡ Tienes poca electricidad: " + economia.electricidad);
+		if(economia.electricidad === 0){
+			alertas.push("¡Alerta! Te has quedado sin electricidad");
 		}
 
-		if(economia.agua <= 20){
-			alertas.push("💧 Tienes poca agua: " + economia.agua);
+		if(economia.agua === 0){
+			alertas.push("¡Alerta! Te has quedado sin agua");
 		}
 
-		if(economia.dinero <= 20){
-			alertas.push("💰 Te estas quedando sin dinero: " + economia.dinero);
+		if((economia.alimento || 0) === 0){
+			alertas.push("¡Alerta! Te has quedado sin alimentos");
 		}
 
-		if((economia.alimento || 0) <= 20){
-			alertas.push("🌽 Tienes pocos alimentos: " + economia.alimento);
+		if(economia.dinero <= 0){
+			alertas.push("¡Alerta! Te has quedado sin dinero");
 		}
 
 		if(this.#controladorCiudadanos){

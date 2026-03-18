@@ -11,7 +11,7 @@ export class Juego{
 
     constructor({
         ciudad,
-        tiempoPorTurno = 30,
+        tiempoPorTurno = 10,
         turnoActual = 1,
         estado = TipoEstado.INICIADO,
         puntuacionAcumulada = 0

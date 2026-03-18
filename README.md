@@ -631,6 +631,13 @@ Parques: +5 por parque
 Total de ciudadanos
 Empleados / Desempleados
 Felicidad promedio
+
+Notas de implementación (aclaraciones sin reemplazar criterios):
+- Excepción de bootstrap para ciudad vacía: si la población es 0, se permite la primera ola de ciudadanos siempre que exista vivienda y empleo disponible.
+- Tope de contribución a felicidad por balance de juego:
+- Servicios: máximo 3 servicios efectivos para sumar felicidad.
+- Parques: máximo 6 parques efectivos para sumar felicidad.
+
 Prioridad: Alta
 Dependencias: HU-003, HU-004, HU-005, HU-006
 
