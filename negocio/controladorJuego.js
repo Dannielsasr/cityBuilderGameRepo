@@ -12,6 +12,7 @@ import { Parque } from "../modelos/Parque.js";
 import { CiudadRepository } from "../accesoDatos/CiudadRepository.js";
 import { controladorTurnos } from "./controladorTurnos.js";
 import { controladorCiudadanos } from "./controladorCiudadanos.js";
+import { controladorPuntuacion } from "./controladorPuntuacion.js";
 import { TipoComercial, TipoIndustrial, TipoServicio, TipoUtilidad, TipoResidencial } from "../modelos/Enums.js";
 import * as Rutas from "./controladorRutas.js";
 import { cargarActualizarNoticias } from "./controladorNoticias.js";
@@ -45,6 +46,8 @@ const btnReiniciar = document.getElementById("reiniciar");
 const mapaDiv = document.getElementById("mapa");
 const nombreCiudadTitulo = document.getElementById("nombreCiudad");
 const containerConfig = document.getElementById("container-config");
+const containerPuntaje = document.querySelector(".puntaje-container");
+const panel = document.getElementById("panelDesglose");
 
 //contadores
 
@@ -56,6 +59,7 @@ const totalAlimento = document.getElementById("totalAlimento");
 const promedioFelicidad = document.getElementById("promedioFelicidad");
 
 
+const puntaje = document.getElementById("puntaje");
 const contadorResidenciales = document.getElementById("contadorResidenciales");
 const contadorComerciales = document.getElementById("contadorComerciales");
 const contadorUtilidades = document.getElementById("contadorUtilidades");
@@ -104,6 +108,7 @@ let modo = "";
 let modoConstruccionActivo = MODOS_CONSTRUCCION.NINGUNO;
 let sistemaTurnos;
 let sistemaCiudadanos;
+let sistemaPuntuacion;
 let edificioSeleccionado = { x: null, y: null };
 const ciudadRepository = new CiudadRepository();
 
@@ -111,6 +116,18 @@ document.getElementById("btnExportar").addEventListener("click", exportarCiudadJ
 
 document.getElementById("btnRanking").addEventListener("click", () => {
     window.location.href = "/presentacion/vistas/ranking.html";
+});
+
+containerPuntaje.addEventListener("mouseenter", () => {
+    panel.style.opacity = "1";
+    panel.style.visibility = "visible";
+    panel.style.transform = "translateY(0)";
+});
+
+containerPuntaje.addEventListener("mouseleave", () => {
+    panel.style.opacity = "0";
+    panel.style.visibility = "hidden";
+    panel.style.transform = "translateY(-5px)";
 });
 
 
@@ -206,7 +223,6 @@ mapaDiv?.addEventListener("click", manejarClickMapa);
 function configurarEventosPausa() {
 
     btnPausa?.addEventListener("click", () => {
-        console.log("PAUSAR", sistemaTurnos);
 
         if (!sistemaTurnos) return;
 
@@ -221,7 +237,6 @@ function configurarEventosPausa() {
     });
 
     btnContinuar?.addEventListener("click", () => {
-        console.log("REANUDAR", sistemaTurnos);
 
         if (!sistemaTurnos) return;
 
@@ -249,6 +264,7 @@ function configurarEventosPausa() {
     });
 }
 
+//procedimiento mas importante, maneja todo el flujo del juego.
 async function iniciarJuego() {
     const data = ciudadRepository.obtenerCiudadActual();
 
@@ -279,35 +295,38 @@ async function iniciarJuego() {
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
     //clima
     const coordenadas = COORDENADAS_REGIONES[data.region];
-if (coordenadas) {
-    cargarActualizarClima(coordenadas); // El controlador se encarga de obtener y actualizar
-
-    setInterval(() => {
+    if (coordenadas) {
         cargarActualizarClima(coordenadas);
-    }, 1800000);
-}
+
+        setInterval(() => {
+            cargarActualizarClima(coordenadas);
+        }, 1800000);
+    }
 
     cargarActualizarNoticias();
     setInterval(() => {
         cargarActualizarNoticias();
     }, 1800000);
 
+    sistemaCiudadanos = new controladorCiudadanos(juego);
     renderizarCiudad();
-    //setteamos para que juego este global en controladorRutas
+
     Rutas.setJuego(juego);
 
-    sistemaCiudadanos = new controladorCiudadanos(juego);
+    sistemaPuntuacion = new controladorPuntuacion(juego);
+    //con el fin de actualizar en juego la puntuacion y poder manejar bien la parte de los rankings
+    juego.puntuacionAcumulada = sistemaPuntuacion.calcularPuntuacion().puntuacion;
 
+    //deseo saber de esto en cada turno?
     sistemaTurnos = new controladorTurnos(
         juego,
         sistemaCiudadanos,
-        (alertData) => {
+        sistemaPuntuacion,
+        (datos) => {
+            actualizarPuntuacion(datos.puntuacion);
+            renderDesglose(datos.desglose);
             guardarCiudad();
             renderizarCiudad();
-
-            if (Array.isArray(alertData.alertas) && alertData.alertas.length > 0) {
-                alert(alertData.alertas.join("\n"));
-            }
         }
     );
 
@@ -530,7 +549,6 @@ function destruirElemento(event){
         const tipo = obtenerTipoPorSubtipo(subtipo);
         const edificio = crearEdificio(0, tipo);
         costo = edificio.costo;
-        console.log(tipo)
     }
 
     juego.ciudad.economia.dinero += Math.floor(costo * 0.5);
@@ -693,6 +711,25 @@ function actualizarRecursos(juego){
     totalElectricidad.textContent = `${juego.ciudad.economia.electricidad}`;
     totalAlimento.textContent = `${juego.ciudad.economia.alimento}`;
     promedioFelicidad.textContent = `${sistemaCiudadanos.obtenerFelicidadPromedio(ciudadanos)}`;
+}
+
+function actualizarPuntuacion(puntuacion){
+    if(!puntaje) return;
+
+    puntaje.textContent = puntuacion;
+}
+
+function renderDesglose(desglose) {
+    document.getElementById("d-poblacion").textContent = desglose.poblacion;
+    document.getElementById("d-felicidad").textContent = desglose.felicidad;
+    document.getElementById("d-dinero").textContent = desglose.dinero;
+    document.getElementById("d-edificios").textContent = desglose.edificios;
+    document.getElementById("d-recursos").textContent = desglose.recursos;
+
+    document.getElementById("d-bonificaciones").textContent = desglose.bonificaciones;
+    document.getElementById("d-penalizaciones").textContent = desglose.penalizaciones;
+
+    document.getElementById("d-total").textContent = desglose.puntuacion;
 }
 
 //este metodo simplemente actualiza los contadores de los elementos en pantalla.
@@ -900,9 +937,9 @@ function guardarCiudad(){
         economia: juego.ciudad.economia.toJSON(),
         ciudadanos: juego.ciudad.ciudadanos,
         poblacion: juego.ciudad.ciudadanos.length,
+        puntuacionAcumulada: juego.puntuacionAcumulada, //para poder obtener el ranking
         turnoActual: juego.turnoActual
     };
-
     ciudadRepository.guardarCiudadActual(dataCiudad);
 }
 

@@ -26,7 +26,7 @@ export class RankingRepository {
                 cityId: ciudad.idCiudad,
                 cityName: ciudad.nombre,
                 mayor: ciudad.alcalde,
-                score: ciudad.puntuacionAcumulada,
+                score: ciudad.puntuacionAcumulada || 0, //juego es quien tiene la puntuacion
                 population: ciudad.poblacion,
                 happiness: Math.round(felicidadPromedio),
                 turns: ciudad.turnoActual,
@@ -40,9 +40,5 @@ export class RankingRepository {
 
         return ranking;
     }
-
-    // obtenerTop10(){
-    //     return this.obtenerRanking().slice(0,10);
-    // }
 
 }

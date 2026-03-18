@@ -51,7 +51,7 @@ export class CiudadRepository {
 				celdas: this.#crearCeldasVacias(normalized.tamanoMapa, normalized.tamanoMapa)
 			},
 			economia: {
-				dinero: 500000,
+				dinero: 50000,
 				electricidad: 0,
 				agua: 0,
 				alimento: 0
@@ -443,7 +443,8 @@ export class CiudadRepository {
 		const ciudadanos = this.#normalizarCiudadanos(ciudadData.ciudadanos);
 
 		const turnoActual = Math.max(1, this.#numeroSeguro(ciudadData.turnoActual, 1));
-		const puntuacionAcumulada = Math.max(0, this.#numeroSeguro(ciudadData.puntuacionAcumulada, 0));
+		// const puntuacionAcumulada = Math.max(0, this.#numeroSeguro(ciudadData.puntuacionAcumulada, 0));
+		const {puntuacionAcumulada} = ciudadData;
 		const poblacion = Math.max(
 			0,
 			this.#numeroSeguro(ciudadData.poblacion, ciudadanos.length)

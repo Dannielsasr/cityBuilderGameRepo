@@ -27,12 +27,14 @@ const CONFIG_TURNOS_DEFECTO = Object.freeze({
 export class controladorTurnos {
 	#juego;
 	#controladorCiudadanos;
+	#controladorPuntuacion;
 	#onActualizacion;
 	#intervalId;
 	#pausado;
 	#config;
+	#alertasActivas = new Set();
 
-	constructor(juego, controladorCiudadanos, onActualizacion, config = {}) {
+	constructor(juego, controladorCiudadanos, controladorPuntuacion, onActualizacion, config = {}) {
 		if (!(juego instanceof Juego)) {
 			throw new Error("controladorTurnos requiere una instancia valida de Juego");
 		}
@@ -42,6 +44,13 @@ export class controladorTurnos {
 			onActualizacion = controladorCiudadanos;
 			controladorCiudadanos = null;
 		}
+
+		// if (
+		// 	controladorPuntuacion !== null &&
+		// 	controladorPuntuacion !== undefined
+		// ) {
+		// 	throw new Error("error controladorPuntuacion");
+		// }
 
 		if (typeof onActualizacion !== "function") {
 			throw new Error("onActualizacion debe ser una funcion");
@@ -61,6 +70,7 @@ export class controladorTurnos {
 
 		this.#juego = juego;
 		this.#controladorCiudadanos = controladorCiudadanos ?? null;
+		this.#controladorPuntuacion = controladorPuntuacion ?? null;
 		this.#onActualizacion = onActualizacion;
 		this.#intervalId = null;
 		this.#pausado = false;
@@ -154,20 +164,16 @@ export class controladorTurnos {
 	}
 
 	// 6) Notificaciones.
-	const alertas = this._verificarAlertas(economia);
+	this._verificarAlertas(economia);
 
 	this.#juego.turnoActual++;
 
-	const balance = (
-		totals.produccionElectricidad +
-		totals.produccionAgua +
-		totals.produccionAlimento +
-		totals.ingresoTotal
-	) - (
-		totals.consumoElectricidad +
-		totals.consumoAgua +
-		totals.consumoAlimento
-	);
+	//me retorna el desglose
+	const desglose = this.#controladorPuntuacion
+		? this.#controladorPuntuacion.calcularPuntuacion()
+		: { puntuacion: 0 };
+	
+	const {puntuacion} = desglose;
 
 	const estadisticasCiudadanos = this.#controladorCiudadanos && typeof this.#controladorCiudadanos.obtenerEstadisticas === "function"
 		? this.#controladorCiudadanos.obtenerEstadisticas()
@@ -184,9 +190,9 @@ export class controladorTurnos {
 		ingresoTotal: totals.ingresoTotal,
 		beneficioFelicidadTotal: totals.beneficioFelicidadTotal,
 		mantenimientoTotal: totals.mantenimiento,
-		balance,
-		estadisticasCiudadanos,
-		alertas
+		puntuacion,
+		desglose,
+		estadisticasCiudadanos
 	});
 	}
 
@@ -334,32 +340,74 @@ export class controladorTurnos {
 	}
 
 	_verificarAlertas(economia){
-		const alertas = [];
+	const nuevasAlertas = new Set();
 
-		if(economia.electricidad === 0){
-			alertas.push("¡Alerta! Te has quedado sin electricidad");
+	if(economia.electricidad === 0){
+		nuevasAlertas.add("electricidad");
+		this._mostrarAlertaToast("¡Alerta! Te has quedado sin electricidad");
+		// this._emitirSiEsNueva("electricidad", "¡Alerta! Te has quedado sin electricidad");
+	}
+
+	if(economia.agua === 0){
+		nuevasAlertas.add("agua");
+		this._mostrarAlertaToast("¡Alerta! Te has quedado sin agua");
+		// this._emitirSiEsNueva("agua", "¡Alerta! Te has quedado sin agua");
+	}
+
+	if((economia.alimento || 0) === 0){
+		nuevasAlertas.add("alimento");
+		this._mostrarAlertaToast("¡Alerta! Te has quedado sin alimentos");
+		// this._emitirSiEsNueva("alimento", "¡Alerta! Te has quedado sin alimentos");
+	}
+
+	if(economia.dinero <= 0){
+		nuevasAlertas.add("dinero");
+		this._mostrarAlertaToast("¡Alerta! Te has quedado sin dinero");
+		// this._emitirSiEsNueva("dinero", "¡Alerta! Te has quedado sin dinero");
+	}
+
+	if(this.#controladorCiudadanos){
+		const stats = this.#controladorCiudadanos.obtenerEstadisticas();
+
+		if(stats.felicidadPromedio <= 20){
+			nuevasAlertas.add("felicidad");
+			this._mostrarAlertaToast("😡 Ciudadanos infelices");
+			// this._emitirSiEsNueva("felicidad", "😡 Ciudadanos infelices");
 		}
+	}
 
-		if(economia.agua === 0){
-			alertas.push("¡Alerta! Te has quedado sin agua");
+	// Actualizamos estado
+	this.#alertasActivas = nuevasAlertas;
+}
+
+	_emitirSiEsNueva(tipo, mensaje){
+		if(!this.#alertasActivas.has(tipo)){
+			this._mostrarAlertaToast(mensaje);
 		}
+	}
 
-		if((economia.alimento || 0) === 0){
-			alertas.push("¡Alerta! Te has quedado sin alimentos");
-		}
+	_mostrarAlertaToast(mensaje, duracion = 3000) {
+		const contenedor = document.getElementById("contenedor-alertas");
 
-		if(economia.dinero <= 0){
-			alertas.push("¡Alerta! Te has quedado sin dinero");
-		}
+		const alerta = document.createElement("div");
+		alerta.classList.add("alerta-toast");
+		alerta.textContent = mensaje;
 
-		if(this.#controladorCiudadanos){
-			const stats = this.#controladorCiudadanos.obtenerEstadisticas();
+		contenedor.appendChild(alerta);
 
-			if(stats.felicidadPromedio <= 20){
-				alertas.push("😡 Ciudadanos infelices");
-			}
-		}
+		// Forzar reflow para animación
+		requestAnimationFrame(() => {
+			alerta.classList.add("mostrar");
+		});
 
-		return alertas;
+		// Ocultar después de X tiempo
+		setTimeout(() => {
+			alerta.classList.remove("mostrar");
+			alerta.classList.add("ocultar");
+
+			setTimeout(() => {
+				alerta.remove();
+			}, 300);
+		}, duracion);
 	}
 }

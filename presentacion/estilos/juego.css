@@ -45,6 +45,42 @@ body{
     margin-bottom: 10px;
 }
 
+.contenedor-alertas {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.alerta-toast {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    background: linear-gradient(
+        135deg,
+        rgba(0,0,0,0.8),
+        rgba(50,50,50,0.7)
+    );
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.alerta-toast.mostrar {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.alerta-toast.ocultar {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
 .overlay-pausa {
     position: fixed;
     top: 0;
@@ -120,6 +156,56 @@ body{
     border: none;
 }
 
+.puntaje-container {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Panel oculto por defecto */
+.panel-desglose {
+    position: absolute;
+    top: 120%;
+    right: 0;
+
+    width: 220px;
+    padding: 10px;
+
+    background: #1e1e1e;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 12px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-5px);
+
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+/* el hover */
+.puntaje-container:hover .panel-desglose {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Detalles */
+.panel-desglose {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-5px);
+    transition: all 0.2s ease;
+}
+
+.panel-desglose hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    margin: 6px 0;
+}
+
 .btn-light{
     background-color: #6ed43b;
 }
@@ -145,7 +231,7 @@ body{
 }
 
 .celda{
-    background: green;
+    background: rgb(55, 181, 55);
     border-radius: 3px;
 
     display: flex;

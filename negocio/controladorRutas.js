@@ -65,8 +65,6 @@ export async function calcularRuta(origen, destino){
             destino
         );
 
-        console.log(ruta);
-
         pintarRuta(ruta);
 
     }catch(error){

@@ -9,6 +9,7 @@
             <link rel="stylesheet" type="text/css" href="../estilos/juego.css">
         </head>
         <body>
+            <div id="contenedor-alertas" class="contenedor-alertas"></div>
             <h3 id="nombreCiudad" class="text-center my-4"> Una ciudad </h3>
             <button id="pausado" type="button" class="btn btn-secondary">⏸ Pausar</button>
             <div id="container-config" class="oculto">
@@ -139,9 +140,27 @@
                             <h6 class="titulo-seccion">Estadísticas</h6>
                             <div id="estadisticas-contenido">
                                 <div class="list-group list-group-flush">
-                                    <div class="d-flex justify-content-between align-items-center">
+                                    <div class="puntaje-container d-flex justify-content-between align-items-center">
                                         <span class="text-muted small">Puntaje</span>
                                         <span id="puntaje">0</span>
+                                        <!-- Panel flotante -->
+                                            <div class="panel-desglose" id="panelDesglose">
+                                                <div class="titulo">Desglose</div>
+                                                <div>bal. Población: <span id="d-poblacion"></span></div>
+                                                <div>bal. Felicidad: <span id="d-felicidad"></span></div>
+                                                <div>bal. Dinero: <span id="d-dinero"></span></div>
+                                                <div>bal. Edificios: <span id="d-edificios"></span></div>
+                                                <div>bal. Recursos: <span id="d-recursos"></span></div>
+
+                                                <hr>
+
+                                                <div class="text-success">Bonificaciones: <span id="d-bonificaciones"></span></div>
+                                                <div class="text-danger">Penalizaciones: <span id="d-penalizaciones"></span></div>
+
+                                                <hr>
+
+                                                <div class="fw-bold">Total: <span id="d-total"></span></div>
+                                            </div>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted small">Dinero</span>

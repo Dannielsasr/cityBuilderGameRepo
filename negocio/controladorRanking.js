@@ -21,7 +21,6 @@ function iniciarRanking(){
 
 //renderiza dinamicamente el ranking
 function renderizarTabla(top10, ciudadActual){
-
     const tbody = document.getElementById("ranking-body");
     tbody.innerHTML = "";
 
