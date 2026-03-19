@@ -21,7 +21,20 @@ const CONFIG_DEFECTO = Object.freeze({
     MAX_SERVICIOS: 3,           // cap de servicios que suman felicidad
     BONO_PARQUE: 5,
     MAX_PARQUES: 6,             // cap de parques que suman felicidad
-    PENALIZACION_RECURSO: -20   // se aplica por recurso (agua / electricidad) en 0
+    PENALIZACION_RECURSO: -20,  // se aplica por recurso (agua / electricidad) en 0
+    // EMIGRACIÓN
+    umbralFelicidadEmigrar: 10,              // Ciudadanos con felicidad < 10 se van
+    maxTurnosDesempleado: 5,                 // Max turnos sin empleo antes de emigrar
+    maxTurnosSinVivienda: 3,                 // Max turnos sin vivienda antes de emigrar
+    porcentajeEmigranCrisis: 25,             // % que emigra en crisis económica
+    dineroNegativoTurnosMax: 3,              // Turnos con dinero negativo para crisis
+
+    // INMIGRACIÓN
+    umbralFelicidadInmigrar: 80,             // Felicidad promedio mínima para inmigración
+    inmigrantesMin: 1,
+    inmigrantesMax: 3,
+    dineroMinimoInmigracion: 50000,          // Dinero mínimo tesorería
+    capacidadResidualLibreMin: 0.10          // Mínimo 10% viviendas libres
 });
 
 // ─── Mapas de subtipo → tipo (constantes de módulo) ───────────────────────────
@@ -54,6 +67,8 @@ export class controladorCiudadanos{
     // residentes[] y empleados[] persistan en memoria.
     #registroEdificios;
     #contadorId;
+    #turnosDineroNegativo;
+    #ultimoEventoMigracion;
 
     /**
      * @param {Juego} juego
@@ -67,25 +82,50 @@ export class controladorCiudadanos{
         this.#config        = { ...CONFIG_DEFECTO, ...config };
         this.#registroEdificios = new Map();
         this.#contadorId    = this._obtenerMaxIdCiudadano();
+        this.#turnosDineroNegativo = 0;
+        this.#ultimoEventoMigracion = {
+            emigracion: { total: 0, infelicidad: 0, desempleo: 0, sinVivienda: 0, crisis: 0, mensajes: [] },
+            inmigracion: { total: 0, mensajes: [] },
+            mensajes: []
+        };
     }
 
     // ─── API pública ──────────────────────────────────────────────────────────
 
     /**
-     * Ejecuta toda la lógica de ciudadanos para un turno:
-        * 1. Crea ciudadanos si se cumplen reglas de crecimiento (vivienda/felicidad/empleo).
-     * 2. Asigna vivienda a sin hogar (incluye recién creados).
-     * 3. Asigna empleo a desempleados.
-     * 4. Recalcula felicidad con la fórmula completa.
+     * Ejecuta la lógica de ciudadanos por turno con el orden HU-14:
+     * 1) Emigración, 2) crecimiento natural, 3) inmigración,
+     * 4) asignación de vivienda/empleo, 5) recalcular felicidad.
      */
     procesarTurno() {
         const { ciudad } = this.#juego;
         const { celdas }  = ciudad.mapa;
 
+        const resumenEmigracion = this._procesarEmigracion(celdas, ciudad);
         this._crearCiudadanos(celdas, ciudad);
+        const resumenInmigracion = this._procesarInmigracion(celdas, ciudad);
         this._asignarViviendas(celdas, ciudad);
         this._asignarEmpleos(celdas, ciudad);
         this._actualizarFelicidades(celdas, ciudad);
+
+        this.#ultimoEventoMigracion = {
+            emigracion: resumenEmigracion,
+            inmigracion: resumenInmigracion,
+            mensajes: [
+                ...(resumenEmigracion?.mensajes || []),
+                ...(resumenInmigracion?.mensajes || [])
+            ]
+        };
+
+        return this.#ultimoEventoMigracion;
+    }
+
+    obtenerResumenMigracionTurno() {
+        return {
+            emigracion: { ...(this.#ultimoEventoMigracion?.emigracion || {}) },
+            inmigracion: { ...(this.#ultimoEventoMigracion?.inmigracion || {}) },
+            mensajes: [...(this.#ultimoEventoMigracion?.mensajes || [])]
+        };
     }
 
     /**
@@ -162,12 +202,161 @@ export class controladorCiudadanos{
         }
     }
 
+    _procesarEmigracion(_celdas, ciudad) {
+        const cfg = this.#config;
+        const resultado = {
+            total: 0,
+            infelicidad: 0,
+            desempleo: 0,
+            sinVivienda: 0,
+            crisis: 0,
+            mensajes: []
+        };
+
+        const procesados = new Set();
+
+        const porInfelicidad = ciudad.ciudadanos.filter(
+            (ciudadano) => ciudadano.felicidad < cfg.umbralFelicidadEmigrar
+        );
+
+        for (const ciudadano of porInfelicidad) {
+            if (procesados.has(ciudadano)) continue;
+            this._removerCiudadano(ciudad, ciudadano);
+            procesados.add(ciudadano);
+            resultado.infelicidad++;
+            resultado.total++;
+        }
+
+        const porDesempleo = ciudad.ciudadanos.filter(
+            (ciudadano) => (ciudadano.turnosDesempleado || 0) > cfg.maxTurnosDesempleado
+        );
+
+        for (const ciudadano of porDesempleo) {
+            if (procesados.has(ciudadano)) continue;
+            this._removerCiudadano(ciudad, ciudadano);
+            procesados.add(ciudadano);
+            resultado.desempleo++;
+            resultado.total++;
+        }
+
+        const porSinVivienda = ciudad.ciudadanos.filter(
+            (ciudadano) => (ciudadano.turnosSinVivienda || 0) > cfg.maxTurnosSinVivienda
+        );
+
+        for (const ciudadano of porSinVivienda) {
+            if (procesados.has(ciudadano)) continue;
+            this._removerCiudadano(ciudad, ciudadano);
+            procesados.add(ciudadano);
+            resultado.sinVivienda++;
+            resultado.total++;
+        }
+
+        if (this._hayCrisisEconomica(ciudad.economia)) {
+            const ciudadanosActuales = ciudad.ciudadanos;
+            const cantidadCrisis = Math.floor(
+                ciudadanosActuales.length * (cfg.porcentajeEmigranCrisis / 100)
+            );
+            const seleccionados = this._obtenerMuestraAleatoria(ciudadanosActuales, cantidadCrisis);
+
+            for (const ciudadano of seleccionados) {
+                if (procesados.has(ciudadano)) continue;
+                this._removerCiudadano(ciudad, ciudadano);
+                procesados.add(ciudadano);
+                resultado.crisis++;
+                resultado.total++;
+            }
+        }
+
+        if (resultado.infelicidad > 0) {
+            resultado.mensajes.push(
+                `❌ ${resultado.infelicidad} ciudadanos emigraron por infelicidad`
+            );
+        }
+
+        if (resultado.desempleo > 0) {
+            resultado.mensajes.push(
+                `❌ ${resultado.desempleo} ciudadanos emigraron por desempleo prolongado`
+            );
+        }
+
+        if (resultado.sinVivienda > 0) {
+            resultado.mensajes.push(
+                `❌ ${resultado.sinVivienda} ciudadanos emigraron sin encontrar hogar`
+            );
+        }
+
+        if (resultado.crisis > 0) {
+            resultado.mensajes.push(
+                `⚠️ CRISIS: ${resultado.crisis} ciudadanos emigraron por colapso económico`
+            );
+        }
+
+        return resultado;
+    }
+
+    _procesarInmigracion(celdas, ciudad) {
+        const cfg = this.#config;
+        const capacidadLibre = this._calcularCapacidadResidencialLibre(celdas, ciudad);
+        const capacidadTotal = capacidadLibre + ciudad.ciudadanos.length;
+
+        if (capacidadLibre <= 0 || capacidadTotal <= 0) {
+            return { total: 0, mensajes: [] };
+        }
+
+        const felicidadPromedio = ciudad.ciudadanos.length === 0
+            ? 0
+            : this.obtenerFelicidadPromedio(ciudad.ciudadanos);
+
+        const cumpleFelicidad = felicidadPromedio >= cfg.umbralFelicidadInmigrar;
+        const cumpleDinero = (ciudad.economia?.dinero || 0) >= cfg.dineroMinimoInmigracion;
+        const ratioLibre = capacidadLibre / capacidadTotal;
+        const cumpleCapacidad = ratioLibre >= cfg.capacidadResidualLibreMin;
+
+        if (!cumpleFelicidad || !cumpleDinero || !cumpleCapacidad) {
+            return { total: 0, mensajes: [] };
+        }
+
+        const maxPorEspacio = Math.min(cfg.inmigrantesMax, capacidadLibre);
+        if (maxPorEspacio <= 0) {
+            return { total: 0, mensajes: [] };
+        }
+
+        const minEfectivo = Math.min(cfg.inmigrantesMin, maxPorEspacio);
+        const cantidad = this._aleatorioEntre(minEfectivo, maxPorEspacio);
+
+        for (let i = 0; i < cantidad; i++) {
+            this.#contadorId++;
+            ciudad.agregarCiudadano(new Ciudadano({
+                id: `c-${this.#contadorId}`,
+                nombre: `Ciudadano ${this.#contadorId}`,
+                felicidad: 60
+            }));
+        }
+
+        return {
+            total: cantidad,
+            mensajes: [`✅ ${cantidad} nuevos ciudadanos inmigraron`]
+        };
+    }
+
     _actualizarFelicidades(celdas, ciudad) {
         const numServicios = this._calcularServiciosEfectivos(celdas, ciudad.economia);
         const numParques   = this._contarCeldas(celdas, SUBTIPOS_PARQUES);
         const { economia } = ciudad;
 
         for (const ciudadano of ciudad.ciudadanos) {
+            if (ciudadano.empleo) {
+                ciudadano.turnosDesempleado = 0;
+            } else {
+                ciudadano.turnosDesempleado = (ciudadano.turnosDesempleado || 0) + 1;
+            }
+
+            if (ciudadano.vivienda) {
+                ciudadano.turnosSinVivienda = 0;
+            } else {
+                ciudadano.turnosSinVivienda = (ciudadano.turnosSinVivienda || 0) + 1;
+            }
+
             const hObj = this._calcularFelicidadObjetivo(
                 ciudadano, numServicios, numParques, economia
             );
@@ -341,6 +530,44 @@ export class controladorCiudadanos{
             }
         }
         return count;
+    }
+
+    _removerCiudadano(ciudad, ciudadano) {
+        if (ciudadano.vivienda) {
+            ciudadano.vivienda.removerResidente(ciudadano);
+            ciudadano.vivienda = null;
+        }
+
+        if (ciudadano.empleo) {
+            ciudadano.empleo.removerEmpleado(ciudadano);
+            ciudadano.empleo = null;
+        }
+
+        ciudad.removerCiudadano(ciudadano);
+    }
+
+    _hayCrisisEconomica(economia) {
+        if ((economia?.dinero || 0) <= 0) {
+            this.#turnosDineroNegativo += 1;
+        } else {
+            this.#turnosDineroNegativo = 0;
+        }
+
+        return this.#turnosDineroNegativo >= this.#config.dineroNegativoTurnosMax;
+    }
+
+    _obtenerMuestraAleatoria(lista, cantidad) {
+        if (!Array.isArray(lista) || cantidad <= 0) {
+            return [];
+        }
+
+        const copia = [...lista];
+        for (let i = copia.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copia[i], copia[j]] = [copia[j], copia[i]];
+        }
+
+        return copia.slice(0, Math.min(cantidad, copia.length));
     }
 
     _aleatorioEntre(min, max) {

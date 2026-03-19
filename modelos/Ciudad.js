@@ -81,6 +81,14 @@ export class Ciudad {
         this.#ciudadanos.push(ciudadano);
     }
 
+    removerCiudadano(ciudadano) {
+        if (!(ciudadano instanceof Ciudadano)) {
+            throw new Error("Debe ser instancia de Ciudadano");
+        }
+
+        this.#ciudadanos = this.#ciudadanos.filter((c) => c !== ciudadano);
+    }
+
     obtenerCiudadanosSinVivienda() {
         return this.#ciudadanos.filter((ciudadano) => ciudadano.vivienda === null);
     }
