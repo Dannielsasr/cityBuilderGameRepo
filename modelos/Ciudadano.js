@@ -22,6 +22,8 @@ export class Ciudadano{
         this.felicidad = felicidad;
         this.vivienda = vivienda;
         this.empleo = empleo;
+        this.turnosDesempleado = 0;    // Cuenta turnos sin empleo
+        this.turnosSinVivienda = 0;    // Cuenta turnos sin vivienda
     }
 
     get id(){

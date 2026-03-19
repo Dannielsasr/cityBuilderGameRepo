@@ -81,6 +81,21 @@ body{
     transform: translateY(-10px);
 }
 
+.alerta-toast--inmigracion {
+    background: linear-gradient(135deg, rgba(8, 102, 45, 0.95), rgba(23, 153, 79, 0.88));
+    border-left: 4px solid #9df3b7;
+}
+
+.alerta-toast--emigracion {
+    background: linear-gradient(135deg, rgba(144, 22, 22, 0.95), rgba(190, 35, 35, 0.88));
+    border-left: 4px solid #ffb2b2;
+}
+
+.alerta-toast--crisis {
+    background: linear-gradient(135deg, rgba(75, 8, 8, 0.97), rgba(122, 12, 12, 0.9));
+    border-left: 4px solid #ff5f5f;
+}
+
 .overlay-pausa {
     position: fixed;
     top: 0;

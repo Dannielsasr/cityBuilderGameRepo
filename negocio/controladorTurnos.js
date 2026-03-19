@@ -127,6 +127,7 @@ export class controladorTurnos {
 	const { celdas } = ciudad.mapa;
 	const { economia } = ciudad;
 	const estadoRecursosInicio = this._obtenerEstadoRecursosInicio(economia);
+	let resumenMigracion = null;
 
 	let totals = {
 		produccionElectricidad: 0,
@@ -159,6 +160,10 @@ export class controladorTurnos {
 	// 5) Procesar felicidad y poblacion.
 	if (this.#controladorCiudadanos) {
 		this.#controladorCiudadanos.procesarTurno();
+		if (typeof this.#controladorCiudadanos.obtenerResumenMigracionTurno === "function") {
+			resumenMigracion = this.#controladorCiudadanos.obtenerResumenMigracionTurno();
+			this._mostrarNotificacionesMigracion(resumenMigracion);
+		}
 	} else {
 		this._aplicarFelicidadCiudadanos(totals.beneficioFelicidadTotal);
 	}
@@ -192,7 +197,8 @@ export class controladorTurnos {
 		mantenimientoTotal: totals.mantenimiento,
 		puntuacion,
 		desglose,
-		estadisticasCiudadanos
+		estadisticasCiudadanos,
+		resumenMigracion
 	});
 	}
 
@@ -386,11 +392,50 @@ export class controladorTurnos {
 		}
 	}
 
-	_mostrarAlertaToast(mensaje, duracion = 3000) {
+	_mostrarNotificacionesMigracion(resumenMigracion) {
+		if (!resumenMigracion || !Array.isArray(resumenMigracion.mensajes)) {
+			return;
+		}
+
+		resumenMigracion.mensajes.forEach((mensaje) => {
+			const tipo = this._clasificarTipoAlertaMigracion(mensaje);
+			this._mostrarAlertaToast(mensaje, 3500, tipo);
+		});
+	}
+
+	_clasificarTipoAlertaMigracion(mensaje) {
+		if (typeof mensaje !== "string") {
+			return "normal";
+		}
+
+		if (mensaje.includes("CRISIS")) {
+			return "crisis";
+		}
+
+		if (mensaje.includes("✅") || /inmigr/i.test(mensaje)) {
+			return "inmigracion";
+		}
+
+		if (mensaje.includes("❌") || /emigr/i.test(mensaje)) {
+			return "emigracion";
+		}
+
+		return "normal";
+	}
+
+	_mostrarAlertaToast(mensaje, duracion = 3000, tipo = "normal") {
 		const contenedor = document.getElementById("contenedor-alertas");
+		if (!contenedor) return;
 
 		const alerta = document.createElement("div");
 		alerta.classList.add("alerta-toast");
+		if (tipo === "inmigracion") {
+			alerta.classList.add("alerta-toast--inmigracion");
+		} else if (tipo === "emigracion") {
+			alerta.classList.add("alerta-toast--emigracion");
+		} else if (tipo === "crisis") {
+			alerta.classList.add("alerta-toast--crisis");
+		}
 		alerta.textContent = mensaje;
 
 		contenedor.appendChild(alerta);
