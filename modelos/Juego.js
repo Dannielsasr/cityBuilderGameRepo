@@ -59,9 +59,6 @@ export class Juego{
     }
 
     set puntuacionAcumulada(valor){
-        if(valor < 0){
-            throw new Error("La puntuacion es negativa");
-        }
         this.#puntuacionAcumulada = valor
     }
 

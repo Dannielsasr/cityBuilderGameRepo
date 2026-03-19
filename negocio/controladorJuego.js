@@ -48,6 +48,7 @@ const nombreCiudadTitulo = document.getElementById("nombreCiudad");
 const containerConfig = document.getElementById("container-config");
 const containerPuntaje = document.querySelector(".puntaje-container");
 const panel = document.getElementById("panelDesglose");
+const overlayGameOver = document.getElementById("overlay-gameover");
 
 //contadores
 const dinero = document.getElementById("dinero");
@@ -324,6 +325,10 @@ async function iniciarJuego() {
             juego.puntuacionAcumulada = datos.score ?? datos.desglose?.score?? 0;
             actualizarPuntuacion(datos.score);
             renderDesglose(datos.desglose);
+            if (juego.puntuacionAcumulada < 0) {
+                gameOver();
+                return;
+            }
             guardarCiudad();
             renderizarCiudad();
         }
@@ -1185,4 +1190,15 @@ function descargarJSON(data, nombreCiudad){
 
 function notificarExportacion(){
     alert("Ciudad exportada correctamente");
+}
+
+function gameOver() {
+    sistemaTurnos?.pausar();
+    overlayGameOver.classList.remove("oculto");
+    document.body.style.filter = "grayscale(100%)";
+
+    setTimeout(() => {
+        ciudadRepository.eliminarCiudadActual();
+        window.location.href = "../vistas/formularioCiudad.html";
+    }, 5500);
 }

@@ -21,6 +21,53 @@ body{
     text-align: center;
 }
 
+#overlay-gameover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    color: white;
+
+    opacity: 1;
+    visibility: visible;
+
+    transition: opacity 0.3s ease;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+#panel-gameover {
+    transform: scale(0.8);
+    animation: zoomIn 0.4s ease forwards;
+}
+
+@keyframes zoomIn {
+    to {
+        transform: scale(1);
+    }
+}
+
+#overlay-gameover.oculto{
+    display: none;
+}
+
+.oculto{
+    display:none;
+}
+
+
 #container-config{
     position: fixed;
     top: 50%;
@@ -131,10 +178,6 @@ body{
     
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     z-index: 9998;
-}
-
-.oculto {
-    display: none;
 }
 
 #cerrarPanel{
