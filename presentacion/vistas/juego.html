@@ -9,6 +9,9 @@
             <link rel="stylesheet" type="text/css" href="../estilos/juego.css">
         </head>
         <body>
+
+            <div class="container-labels"></div>
+
             <!-- game over oculto -->
             <div id="overlay-gameover" class="oculto">
                 <div id="panel-gameover" class="panel">
@@ -17,21 +20,32 @@
                 </div>
             </div>
 
+            <!-- contenedor de alertas en el cual se crean alertas personalizadas y dinamicas -->
             <div id="contenedor-alertas" class="contenedor-alertas"></div>
+
             <h3 id="nombreCiudad" class="text-center my-4"> Una ciudad </h3>
+
+            <!-- boton pausar -->
             <button id="pausado" type="button" class="btn btn-secondary">⏸ Pausar</button>
+
+            <!-- panel oculto que se activa al darle al boton pausar -->
             <div id="container-config" class="oculto">
                 <h3> Deseas continuar o Eliminar? </h3>
                 <button id="continuar" type="button" class="btn btn-secondary">▶ Reanudar</button>
                 <button id="reiniciar" type="button" class="btn btn-secondary">Eliminar Ciudad Actual</button>
             </div>
+
+            <!-- una linea que muestra las estadisticas de ciudadanos -->
             <div class="container-labels">
                 <label id="estadisticasCiudadanos" class="text-center fw-semibold">Ciudadanos: 0 | Residentes: 0 | No residentes: 0 | Empleados: 0 | Desempleados: 0 | Felicidad promedio: 0%</label>
             </div>
+
+            <!-- boton ranking (redireccion a archivo ranking.html) -->
             <button id="btnRanking" type="button" class="btn btn-light">🏆 Mostrar ranking</button>
 
+            <!-- (panel izquierdo) menu de herramientas -->
             <div class="container-fluid d-flex mt-3">
-                <div class="col-auto me-4">
+                <div class=" me-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
                             <button class="btn btn-primary w-100 mb-2" type="button" 
@@ -111,8 +125,9 @@
                             </div>
                         </div>
                     </div>
-                </div> <!-- finalizacion container de herramientas -->
-
+                </div>
+            
+            <!-- grid el cual representa el mapa con insercion de celdas dinamicamente -->
             <div id="grid-container">
                 <div id="mapa" class="mapa"></div>
             </div>
@@ -139,7 +154,8 @@
             
             </div>
 
-            <div class="col-auto ms-4">
+            <!-- contenedor de panel derecho -->
+            <div class="ms-4">
                 <div class="card shadow-sm panel-derecho">
                     <div class="card-body p-0 d-flex flex-column">
 
@@ -248,7 +264,7 @@
                             </div>
                         </div>
 
-                        <!-- div de clima -->
+                        <!-- contenedor de clima -->
                         <div class="seccion-panel border-bottom p-3">
                             <h6 class="titulo-seccion mb-3">Clima Actual</h6>
                             <div id="clima-contenido">
@@ -274,15 +290,16 @@
                             </div>
                         </div>
             
-                        <!-- div de noticias -->
+                        <!-- contenedor de noticias -->
                         <div class="seccion-panel border-bottom p-3">
                             <h6 class="titulo-seccion">Noticias</h6>
                             <div id="noticias-contenido">
                                 </div>
                         </div>
-            
+
                     </div>
                 </div>
+            </div>
             
             <script type="module" src="../../negocio/controladorJuego.js"></script>
             <script type="module" src="../../negocio/controladorRutas.js"></script>

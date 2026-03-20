@@ -13,7 +13,9 @@ body{
     display: grid;
     gap: 2px;
 
-    width: min(800px, 80vw);
+    width: 100%;
+    max-width: 800px;
+
     aspect-ratio: 1 / 1;
 }
 
@@ -534,4 +536,252 @@ body{
     color: #495057;
     font-weight: 800;
     margin-bottom: 15px;
+}
+
+
+/* EN ESTE LUGAR TRABAJAREMOS EL RESPONSIVE PARA DESKTOP, TABLET Y MOBILE */
+/* convenciones:
+tablet <= 1024 px
+mobile <= 768 px */
+
+/* =========================
+LAYOUT PRINCIPAL (DESKTOP)
+========================= */
+
+.container-fluid.d-flex.mt-3 {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Sidebar izquierdo */
+.container-fluid.d-flex.mt-3 > .col-auto:first-child {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+/* MAPA */
+#grid-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+/* Sidebar derecho */
+.panel-derecho {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+/* =========================
+TABLET (<= 1024px)
+========================= */
+
+@media (max-width: 1024px) {
+
+    .me-4,
+    .ms-4 {
+        margin: 0 !important;
+    }
+
+    /* evitar que el body centre todo */
+    body {
+        align-items: stretch;
+    }
+
+    /* layout principal */
+    .container-fluid.d-flex.mt-3 {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        width: 100%;
+    }
+
+    /* ❌ quitar comportamiento raro de bootstrap */
+    .container-fluid.d-flex.mt-3 > .col-auto {
+        flex: unset;
+        width: unset;
+    }
+
+    /* ocultar sidebar izquierdo */
+    .container-fluid.d-flex.mt-3 > .col-auto:first-child {
+        display: none;
+    }
+
+    /* MAPA (70%) */
+    #grid-container {
+        flex: 0 0 70%;
+        max-width: 70%;
+        min-width: 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    #mapa {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* SIDEBAR DERECHO (30%) */
+    .col-auto.ms-4 {
+        flex: 3;
+        margin-left: 0 !important;
+    }
+
+    .panel-derecho {
+        flex: 0 0 30%;
+        min-width: 0;
+    }
+
+
+    .container-fluid.d-flex.mt-3 > .col-auto.me-4 {
+        order: 3;
+        flex: 0 0 70%; /* mismo ancho que mapa */
+        max-width: 70%;
+    }
+
+    #menuHerramientas .d-grid {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    #menuHerramientas button {
+        flex: 1 1 45%;
+    }
+
+    /* botones táctiles */
+    button {
+        min-height: 40px;
+        font-size: 14px;
+    }
+
+    /* modales */
+    #panelEdificio,
+    #container-config {
+        width: 60%;
+    }
+}
+
+/* =========================
+MOBILE (<= 768px)
+========================= */
+
+@media (max-width: 768px) {
+
+    body {
+        align-items: stretch;
+    }
+
+    .container-fluid.d-flex.mt-3 {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* ocultar sidebar izquierdo (menú construcción) */
+    /* .container-fluid.d-flex.mt-3 > .col-auto:first-child {
+        display: none;
+    } */
+
+    .container-labels {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1000;
+        padding: 5px;
+    }
+
+    #grid-container {
+        padding-bottom: 50px;
+    }
+
+    #menuHerramientas .d-grid {
+        display: flex !important;
+        flex-direction: row;
+        gap: 10px;
+        overflow-x: auto;
+    }
+
+    #menuHerramientas button {
+        flex: 0 0 auto;
+    }
+
+    /* MENÚ COMO BARRA INFERIOR */
+    .container-fluid.d-flex.mt-3 > .col-auto:first-child {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+    }
+
+    .container-fluid.d-flex.mt-3 > .col-auto:first-child .card {
+        border-radius: 0;
+    }
+
+    /* hacer botones scrollables */
+    #menuHerramientas {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* #clima-contenido {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    } */
+
+    #clima-detalle {
+        display: none;
+    }
+
+    /* noticias horizontales pero se ve feo */
+    /* #noticias-contenido {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+    }
+
+    .noticia-item {
+        min-width: 250px;
+    } */
+
+
+
+    /* mapa full width */
+    #grid-container {
+        width: 100%;
+    }
+
+    /* panel derecho abajo */
+    .panel-derecho {
+        width: 100%;
+        max-height: none;
+    }
+
+    /* botones táctiles */
+    button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* estadisticas más compactas */
+    .container-labels {
+        font-size: 12px;
+    }
+
+    /* modal edificio más grande */
+    #panelEdificio {
+        width: 80%;
+        max-height: 80vh;
+    }
+
+    /* config modal */
+    #container-config {
+        width: 80%;
+    }
+
 }
