@@ -101,6 +101,15 @@ const MODOS_CONSTRUCCION = Object.freeze({
     PARQUE: "PARQUE"
 });
 
+const ATAJOS_TECLADO = Object.freeze({
+    ABRIR_MENU_CONSTRUCCION: "KeyB",
+    CONSTRUIR_VIA: "KeyR",
+    DEMOLER: "KeyD",
+    CANCELAR_MODO: "Escape",
+    PAUSAR_REANUDAR: "Space",
+    GUARDAR_PARTIDA: "KeyS"
+});
+
 
 let juego;
 let modo = "";
@@ -109,6 +118,7 @@ let sistemaTurnos;
 let sistemaCiudadanos;
 let sistemaPuntuacion;
 let edificioSeleccionado = { x: null, y: null };
+let atajosTecladoRegistrados = false;
 const ciudadRepository = new CiudadRepository();
 
 document.getElementById("btnExportar").addEventListener("click", exportarCiudadJSON);
@@ -263,6 +273,108 @@ function configurarEventosPausa() {
     });
 }
 
+function configurarAtajosTeclado() {
+    if (atajosTecladoRegistrados) {
+        return;
+    }
+
+    document.addEventListener("keydown", manejarAtajosTeclado);
+    atajosTecladoRegistrados = true;
+}
+
+function manejarAtajosTeclado(event) {
+    if (!juego || event.defaultPrevented || event.repeat) {
+        return;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.altKey || debeIgnorarAtajoPorFoco(event)) {
+        return;
+    }
+
+    switch (event.code) {
+        case ATAJOS_TECLADO.ABRIR_MENU_CONSTRUCCION:
+            abrirMenuConstruccion();
+            break;
+
+        case ATAJOS_TECLADO.CONSTRUIR_VIA:
+            activarModoConstruccion(MODOS_CONSTRUCCION.VIA);
+            break;
+
+        case ATAJOS_TECLADO.DEMOLER:
+            activarModoDemolicion();
+            break;
+
+        case ATAJOS_TECLADO.CANCELAR_MODO:
+            desactivarModos();
+            break;
+
+        case ATAJOS_TECLADO.PAUSAR_REANUDAR:
+            event.preventDefault();
+            alternarPausaReanudacion();
+            break;
+
+        case ATAJOS_TECLADO.GUARDAR_PARTIDA:
+            guardarCiudad({ mostrarNotificacion: true });
+            break;
+
+        default:
+            break;
+    }
+}
+
+function debeIgnorarAtajoPorFoco(event) {
+    const target = event.target;
+    if (!target) {
+        return false;
+    }
+
+    if (target.isContentEditable) {
+        return true;
+    }
+
+    const tagName = String(target.tagName || "").toLowerCase();
+    return tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
+function abrirMenuConstruccion() {
+    abrirCollapse("menuHerramientas");
+    abrirCollapse("opcionesConstruir");
+}
+
+function abrirCollapse(id) {
+    const collapseElement = document.getElementById(id);
+
+    if (!collapseElement) {
+        return;
+    }
+
+    const bootstrapCollapse = window.bootstrap?.Collapse;
+
+    if (bootstrapCollapse) {
+        bootstrapCollapse.getOrCreateInstance(collapseElement, { toggle: false }).show();
+        return;
+    }
+
+    collapseElement.classList.add("show");
+}
+
+function alternarPausaReanudacion() {
+    if (!sistemaTurnos) {
+        return;
+    }
+
+    if (estaPausado()) {
+        btnContinuar?.click();
+        return;
+    }
+
+    btnPausa?.click();
+}
+
+function estaPausado() {
+    return containerConfig.style.display === "block" || Boolean(document.querySelector(".overlay-pausa"));
+}
+
 //procedimiento mas importante, maneja todo el flujo del juego.
 async function iniciarJuego() {
     const data = ciudadRepository.obtenerCiudadActual();
@@ -336,6 +448,7 @@ async function iniciarJuego() {
 
     sistemaTurnos.iniciar();
     configurarEventosPausa();
+    configurarAtajosTeclado();
 }
 
 function manejarClickMapa(e){
@@ -929,7 +1042,8 @@ function construirParque(x, y){
 
 
 
-function guardarCiudad(){
+function guardarCiudad(options = {}){
+    const { mostrarNotificacion = false } = options;
     const data = ciudadRepository.obtenerCiudadActual();
     const dataCiudad = {
         idCiudad: String(juego.ciudad.idCiudad),
@@ -944,6 +1058,31 @@ function guardarCiudad(){
         turnoActual: juego.turnoActual
     };
     ciudadRepository.guardarCiudadActual(dataCiudad);
+
+    if (mostrarNotificacion) {
+        mostrarNotificacionGuardado();
+    }
+}
+
+function mostrarNotificacionGuardado() {
+    const contenedorAlertas = document.getElementById("contenedor-alertas");
+    if (!contenedorAlertas) {
+        return;
+    }
+
+    const alerta = document.createElement("div");
+    alerta.className = "alerta-toast";
+    alerta.textContent = "Partida guardada";
+    contenedorAlertas.appendChild(alerta);
+
+    requestAnimationFrame(() => {
+        alerta.classList.add("mostrar");
+    });
+
+    setTimeout(() => {
+        alerta.classList.add("ocultar");
+        setTimeout(() => alerta.remove(), 300);
+    }, 1300);
 }
 
 function rehidratarAsignacionesCiudadanos(ciudadanosPersistidos, ciudad, celdas) {
