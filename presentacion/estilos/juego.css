@@ -406,6 +406,8 @@ body{
     width: 250px; 
     min-height: 400px;
     background-color: #ffffff;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .seccion-panel:hover {
@@ -438,15 +440,6 @@ body{
 .clima-valor {
     font-weight: bold;
     font-size: 0.875rem; 
-}
-
-
-.titulo-seccion {
-    color: #6c757d;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    font-weight: bold;
 }
 
 
@@ -491,6 +484,7 @@ body{
     /* Efecto de recorte a 3 líneas */
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -520,10 +514,6 @@ body{
 }
 
 /* Ajuste para que el panel derecho pueda moverse hacia abajo*/
-.panel-derecho {
-    max-height: 90vh;
-    overflow-y: auto;
-}
 
 .seccion-panel {
     background-color: #fff;
@@ -579,7 +569,7 @@ LAYOUT PRINCIPAL (DESKTOP)
 TABLET (<= 1024px)
 ========================= */
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
 
     .me-4,
     .ms-4 {
@@ -591,23 +581,39 @@ TABLET (<= 1024px)
         align-items: stretch;
     }
 
+    #texto-btn {
+        display: none;
+    }
+
+    #icono-btn {
+        display: inline;
+        font-size: 20px;
+        background-color: aqua;
+    }
+
     /* layout principal */
     .container-fluid.d-flex.mt-3 {
         display: flex;
-        flex-direction: row;
-        gap: 10px;
+        flex-direction:row;
+        gap: 5px;
         width: 100%;
+    }
+
+    #panel-izq {
+        position: absolute;
+        top: 100%;   /* justo debajo del contenedor */
+        left: 0;
+
+        width: 70%;  /* mismo ancho que el grid */
+        margin-top: 10px;
+
+        z-index: 10;
     }
 
     /* ❌ quitar comportamiento raro de bootstrap */
     .container-fluid.d-flex.mt-3 > .col-auto {
         flex: unset;
         width: unset;
-    }
-
-    /* ocultar sidebar izquierdo */
-    .container-fluid.d-flex.mt-3 > .col-auto:first-child {
-        display: none;
     }
 
     /* MAPA (70%) */
@@ -620,14 +626,8 @@ TABLET (<= 1024px)
     }
 
     #mapa {
-        width: 100%;
+        /* width: 100%; */
         max-width: 100%;
-    }
-
-    /* SIDEBAR DERECHO (30%) */
-    .col-auto.ms-4 {
-        flex: 3;
-        margin-left: 0 !important;
     }
 
     .panel-derecho {
@@ -635,16 +635,9 @@ TABLET (<= 1024px)
         min-width: 0;
     }
 
-
-    .container-fluid.d-flex.mt-3 > .col-auto.me-4 {
-        order: 3;
-        flex: 0 0 70%; /* mismo ancho que mapa */
-        max-width: 70%;
-    }
-
     #menuHerramientas .d-grid {
         display: flex !important;
-        flex-wrap: wrap;
+        /* flex-wrap: wrap; */
         gap: 8px;
     }
 
@@ -693,19 +686,36 @@ MOBILE (<= 768px)
         padding: 5px;
     }
 
-    #grid-container {
-        padding-bottom: 50px;
+    #texto-btn {
+        display: none;
     }
 
+    #icono-btn {
+        display: inline;
+        font-size: 20px;
+        background-color: aqua;
+    }
+
+    .card{
+        max-width: 60%;
+    }
+
+    
     #menuHerramientas .d-grid {
         display: flex !important;
         flex-direction: row;
         gap: 10px;
         overflow-x: auto;
+        overflow-y: hidden;
+        max-width: 60%;
+
+        white-space: nowrap;
+        padding-bottom: 5px;
     }
 
     #menuHerramientas button {
         flex: 0 0 auto;
+
     }
 
     /* MENÚ COMO BARRA INFERIOR */
@@ -718,15 +728,9 @@ MOBILE (<= 768px)
         z-index: 1000;
     }
 
-    .container-fluid.d-flex.mt-3 > .col-auto:first-child .card {
+    /* .container-fluid.d-flex.mt-3 > .col-auto:first-child .card {
         border-radius: 0;
-    }
-
-    /* hacer botones scrollables */
-    #menuHerramientas {
-        overflow-x: auto;
-        white-space: nowrap;
-    }
+    } */
 
     /* #clima-contenido {
         display: flex;
