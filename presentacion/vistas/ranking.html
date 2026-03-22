@@ -8,41 +8,44 @@
     <link rel="stylesheet" type="text/css" href="../estilos/ranking.css">
 </head>
 <body>
-    <header class="ranking-header">
-        <h1>🏙 Ranking de Ciudades</h1>
-        <p>Las mejores ciudades construidas por los alcaldes</p>
+
+    <header class="ranking-header text-center py-4">
+        <h1 class="display-6">🏙 Ranking de Ciudades</h1>
+        <p class="lead">Las mejores ciudades construidas por los alcaldes</p>
     </header>
 
-    <section class="ranking-container">
+    <section class="ranking-container container">
 
-        <div class="ranking-actions">
-            <button id="btn-volver">⬅ Volver al juego</button>
-            <button id="btn-exportar">⬇ Exportar JSON</button>
-            <button id="btn-reset">🗑 Reiniciar Ranking</button>
+        <div class="ranking-actions d-flex flex-column flex-md-row gap-2 justify-content-between mb-3">
+            <button id="btn-volver" class="btn btn-primary">⬅ Volver al juego</button>
+            <button id="btn-exportar" class="btn btn-success">⬇ Exportar JSON</button>
+            <button id="btn-reset" class="btn btn-danger">🗑 Reiniciar Ranking</button>
         </div>
 
-        <table class="ranking-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Ciudad</th>
-                    <th>Alcalde</th>
-                    <th>Puntuación</th>
-                    <th>Población</th>
-                    <th>Felicidad</th>
-                    <th>Turnos</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
+        <div class="table-responsive">
+            <table class="ranking-table table table-striped table-hover text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Ciudad</th>
+                        <th>Alcalde</th>
+                        <th>Puntuación</th>
+                        <th class="d-none d-md-table-cell">Población</th>
+                        <th class="d-none d-md-table-cell">Felicidad</th>
+                        <th class="d-none d-lg-table-cell">Turnos</th>
+                        <th class="d-none d-lg-table-cell">Fecha</th>
+                    </tr>
+                </thead>
 
-            <tbody id="ranking-body">
-                <!-- aqui van las filas -->
-            </tbody>
-        </table>
+                <tbody id="ranking-body">
+                    <!-- aqui van las filas -->
+                </tbody>
+            </table>
+        </div>
 
     </section>
 
-    <section class="player-position">
+    <section class="player-position container text-center mt-4">
         <h3 id="player-ranking">
             <!-- Si el jugador no está en top 10 -->
         </h3>
