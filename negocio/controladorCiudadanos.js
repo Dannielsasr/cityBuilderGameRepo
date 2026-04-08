@@ -9,7 +9,7 @@ import { TipoResidencial, TipoComercial, TipoIndustrial } from "../modelos/Enums
 const CONFIG_DEFECTO = Object.freeze({
     minCrecimiento: 1,          // mínimo ciudadanos creados por turno
     maxCrecimiento: 3,          // máximo ciudadanos creados por turno
-    umbralFelicidadCrecimiento: 60,
+    umbralFelicidadCrecimiento: 60, // felicidad promedio mínima para crear nuevos ciudadanos
     requerirEmpleoDisponible: true,
     alpha: 0.3,                 // velocidad de convergencia de felicidad (0‑1)
     BASE_FELICIDAD: 40,

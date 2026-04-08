@@ -301,7 +301,7 @@ body{
 /* via */
 
 .celda[subtype="r"]{
-    background-image: url("/textures/via.webp");
+    background-image: url("/textures/via.png");
     background-size: cover;
 }
 
@@ -340,7 +340,7 @@ body{
 /* industriales */
 
 .celda[subtype="I1"]{
-    background-image: url("/textures/fabrica1.webp");
+    background-image: url("/textures/fabrica.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
