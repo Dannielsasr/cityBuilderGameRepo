@@ -84,7 +84,7 @@ export class controladorTurnos {
 		}
 
 		this.#pausado = false;
-
+		//ejecuta procesar turno cada x segundos
 		this.#intervalId = setInterval(() => {
 			this.procesarTurno();
 		}, this.#juego.tiempoPorTurno * 1000);
@@ -128,7 +128,7 @@ export class controladorTurnos {
 	const { economia } = ciudad;
 	const estadoRecursosInicio = this._obtenerEstadoRecursosInicio(economia);
 	let resumenMigracion = null;
-
+		console.log("esta es la economia desde turnos", economia);
 	let totals = {
 		produccionElectricidad: 0,
 		produccionAgua: 0,
@@ -317,14 +317,9 @@ export class controladorTurnos {
 		economia.alimento = (economia.alimento || 0) + totals.produccionAlimento;
 		economia.dinero += totals.ingresoTotal;
 
-		//consumo
-		const aplicadoElectricidad = Math.min(economia.electricidad, totals.consumoElectricidad);
-		const aplicadoAgua = Math.min(economia.agua, totals.consumoAgua);
-		const aplicadoAlimento = Math.min(economia.alimento, totals.consumoAlimento);
-
-		economia.electricidad -= aplicadoElectricidad;
-		economia.agua -= aplicadoAgua;
-		economia.alimento -= aplicadoAlimento;
+		economia.electricidad -= totals.consumoElectricidad;
+		economia.agua -= totals.consumoAgua;
+		economia.alimento -= totals.consumoAlimento;
 	}
 
 

@@ -13,7 +13,7 @@ export const TipoResidencial = Object.freeze({
         capacidad: 12,
         costo: 3000,
         costoMantenimiento: 60,
-        consumoElectricidad: 15,
+        consumoElectricidad: 210,
         consumoAgua: 10,
         subtipo: "R2"
     })

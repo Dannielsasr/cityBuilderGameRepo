@@ -327,7 +327,7 @@ function manejarAtajosTeclado(event) {
 }
 
 function debeIgnorarAtajoPorFoco(event) {
-    const target = event.target;
+    const {target} = event;
     if (!target) {
         return false;
     }
@@ -438,10 +438,11 @@ async function iniciarJuego() {
         sistemaCiudadanos,
         sistemaPuntuacion,
         (datos) => {
+            console.log("juegoooo", juego);
             juego.puntuacionAcumulada = datos.score ?? datos.desglose?.score?? 0;
             actualizarPuntuacion(datos.score);
             renderDesglose(datos.desglose);
-            if (juego.puntuacionAcumulada < 0) {
+            if ( juego.puntuacionAcumulada < 0 || juego.ciudad.economia.electricidad < 0 || juego.ciudad.economia.agua < 0 || juego.ciudad.economia.alimento < 0) {
                 gameOver();
                 return;
             }
