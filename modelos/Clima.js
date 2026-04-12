@@ -1,37 +1,29 @@
-class Clima {
-  constructor(tipo, temperatura, humedad) {
-    this.tipo = tipo;
-    this.temperatura = temperatura;
-    this.humedad = humedad;
-  }
+export class Clima {
+    constructor({ temperatura, condicion, humedad, viento, icono }) {
+        this.temperatura = temperatura;
+        this.condicion = condicion;
+        this.humedad = humedad;
+        this.viento = viento;
+        this.icono = icono;
+    }
 
-  getTipo() {
-    return this.tipo;
-  }
+    getTemperatura() {
+        return `${this.temperatura}°C`;
+    }
 
-  getTemperatura() {
-    return this.temperatura;
-  }
+    getCondicion() {
+        return this.condicion;
+    }
 
-  getHumedad() {
-    return this.humedad;
-  }
+    getHumedad() {
+        return `Humedad: ${this.humedad}%`;
+    }
 
-  setTipo(tipo) {
-    this.tipo = tipo;
-  }
+    getViento() {
+        return `Viento: ${this.viento} m/s`;
+    }
 
-  setTemperatura(temperatura) {
-    this.temperatura = temperatura;
-  }
-
-  setHumedad(humedad) {
-    this.humedad = humedad;
-  }
-
-  toString() {
-    return `Clima: ${this.tipo}, Temperatura: ${this.temperatura}°C, Humedad: ${this.humedad}%`;
-  }
+    getIcono() {
+        return this.icono;
+    }
 }
-
-module.exports = Clima;

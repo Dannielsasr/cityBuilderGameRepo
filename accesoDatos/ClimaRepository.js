@@ -1,3 +1,4 @@
+import { Clima } from "../modelos/Clima.js";
 export const COORDENADAS_REGIONES = {
     "1": { lat: 4.6097, lon: -74.0817 }, // Andina (Bogotá)
     "2": { lat: 10.9685, lon: -74.7813 }, // Caribe (Barranquilla)
@@ -19,14 +20,14 @@ export class ClimaRepository {
             if (!respuesta.ok) throw new Error('Error al consultar el clima');
 
             const datos = await respuesta.json();
-            
-            return {
+            //parseo de datos a objeto Clima
+            return new Clima({
                 temperatura: Math.round(datos.main.temp),
                 condicion: datos.weather[0].description,
                 humedad: datos.main.humidity,
                 viento: datos.wind.speed,
                 icono: `https://openweathermap.org/img/wn/${datos.weather[0].icon}@2x.png`
-            };
+            });
         } catch (error) {
             console.error("Error en ClimaRepository:", error);
             return null;

@@ -16,9 +16,9 @@ function actualizarWidgetClima(clima) {
     const humEl = document.getElementById("clima-humedad");
     const vientoEl = document.getElementById("clima-viento");
 
-    if (tempEl) tempEl.textContent = `${clima.temperatura}°C`;
-    if (condEl) condEl.textContent = clima.condicion;
-    if (iconoEl) iconoEl.src = clima.icono;
-    if (humEl) humEl.textContent = `Humedad: ${clima.humedad}%`;
-    if (vientoEl) vientoEl.textContent = `Viento: ${clima.viento} m/s`;
+    if (tempEl) tempEl.textContent = clima.getTemperatura();
+    if (condEl) condEl.textContent = clima.getCondicion();
+    if (iconoEl) iconoEl.src = clima.getIcono();
+    if (humEl) humEl.textContent = clima.getHumedad();
+    if (vientoEl) vientoEl.textContent = clima.getViento();
 }
