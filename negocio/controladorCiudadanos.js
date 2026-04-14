@@ -145,6 +145,32 @@ export class controladorCiudadanos{
         return { total, empleados, desempleados, felicidadPromedio };
     }
 
+    actualizarConfiguracion(configParcial = {}) {
+        if (!configParcial || typeof configParcial !== "object") {
+            return;
+        }
+
+        const nuevaConfig = { ...this.#config, ...configParcial };
+
+        if (!Number.isFinite(nuevaConfig.minCrecimiento) || !Number.isFinite(nuevaConfig.maxCrecimiento)) {
+            throw new Error("minCrecimiento y maxCrecimiento deben ser numericos");
+        }
+
+        if (!Number.isInteger(nuevaConfig.minCrecimiento) || !Number.isInteger(nuevaConfig.maxCrecimiento)) {
+            throw new Error("minCrecimiento y maxCrecimiento deben ser enteros");
+        }
+
+        if (nuevaConfig.minCrecimiento < 0 || nuevaConfig.maxCrecimiento < 0) {
+            throw new Error("minCrecimiento y maxCrecimiento deben ser mayores o iguales a 0");
+        }
+
+        if (nuevaConfig.minCrecimiento > nuevaConfig.maxCrecimiento) {
+            throw new Error("minCrecimiento no puede ser mayor que maxCrecimiento");
+        }
+
+        this.#config = nuevaConfig;
+    }
+
     // ─── Métodos internos
 
     _crearCiudadanos(celdas, ciudad) {

@@ -441,6 +441,7 @@ export class CiudadRepository {
 		};
 
 		const ciudadanos = this.#normalizarCiudadanos(ciudadData.ciudadanos);
+		const simulationConfig = this.#normalizarSimulationConfig(ciudadData.simulationConfig);
 
 		const turnoActual = Math.max(1, this.#numeroSeguro(ciudadData.turnoActual, 1));
 		// const puntuacionAcumulada = Math.max(0, this.#numeroSeguro(ciudadData.puntuacionAcumulada, 0));
@@ -464,11 +465,66 @@ export class CiudadRepository {
 			},
 			economia,
 			ciudadanos,
+			simulationConfig,
 			turnoActual,
 			puntuacionAcumulada,
 			poblacion,
 			updatedAt: nowIso,
 			createdAt: ciudadData.createdAt ?? nowIso
+		};
+	}
+
+	#normalizarSimulationConfig(configRaw) {
+		const defaults = {
+			turnos: {
+				tiempoPorTurno: 10,
+				consumoAlimentoPorCiudadano: 1
+			},
+			ciudadanos: {
+				minCrecimiento: 1,
+				maxCrecimiento: 3
+			},
+			beneficios: {
+				S1: 10,
+				S2: 10,
+				S3: 10,
+				P1: 5
+			}
+		};
+
+		const turnosRaw = configRaw?.turnos ?? {};
+		const ciudadanosRaw = configRaw?.ciudadanos ?? {};
+		const beneficiosRaw = configRaw?.beneficios ?? {};
+
+		const tiempoPorTurno = this.#numeroSeguro(turnosRaw.tiempoPorTurno, defaults.turnos.tiempoPorTurno);
+		const consumoAlimentoPorCiudadano = this.#numeroSeguro(
+			turnosRaw.consumoAlimentoPorCiudadano,
+			defaults.turnos.consumoAlimentoPorCiudadano
+		);
+
+		const minCrecimiento = Math.max(0, Math.trunc(this.#numeroSeguro(ciudadanosRaw.minCrecimiento, defaults.ciudadanos.minCrecimiento)));
+		let maxCrecimiento = Math.max(0, Math.trunc(this.#numeroSeguro(ciudadanosRaw.maxCrecimiento, defaults.ciudadanos.maxCrecimiento)));
+		if (maxCrecimiento < minCrecimiento) {
+			maxCrecimiento = minCrecimiento;
+		}
+
+		const beneficios = {
+			S1: Math.max(0, this.#numeroSeguro(beneficiosRaw.S1, defaults.beneficios.S1)),
+			S2: Math.max(0, this.#numeroSeguro(beneficiosRaw.S2, defaults.beneficios.S2)),
+			S3: Math.max(0, this.#numeroSeguro(beneficiosRaw.S3, defaults.beneficios.S3)),
+			P1: Math.max(0, this.#numeroSeguro(beneficiosRaw.P1, defaults.beneficios.P1))
+		};
+
+		return {
+			turnos: {
+				tiempoPorTurno: tiempoPorTurno > 0 ? tiempoPorTurno : defaults.turnos.tiempoPorTurno,
+				consumoAlimentoPorCiudadano
+			},
+			ciudadanos: {
+				minCrecimiento,
+				maxCrecimiento
+			},
+			beneficios
 		};
 	}
 
