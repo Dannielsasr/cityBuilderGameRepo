@@ -32,6 +32,7 @@ export class controladorTurnos {
 	#intervalId;
 	#pausado;
 	#config;
+	#overridesBeneficios;
 	#alertasActivas = new Set();
 
 	constructor(juego, controladorCiudadanos, controladorPuntuacion, onActualizacion, config = {}) {
@@ -75,6 +76,11 @@ export class controladorTurnos {
 		this.#intervalId = null;
 		this.#pausado = false;
 		this.#config = { ...CONFIG_TURNOS_DEFECTO, ...config };
+		this.#overridesBeneficios = {};
+
+		if (config && typeof config === "object" && config.overridesBeneficios) {
+			this.actualizarOverridesBeneficios(config.overridesBeneficios);
+		}
 	}
 
 	// Inicia el sistema de turnos, procesando un turno cada tiempoPorTurno segundos
@@ -106,6 +112,70 @@ export class controladorTurnos {
 		}
 
 		this.iniciar();
+	}
+
+	actualizarConfiguracion(configParcial = {}) {
+		if (!configParcial || typeof configParcial !== "object") {
+			return;
+		}
+
+		if (Object.prototype.hasOwnProperty.call(configParcial, "tiempoPorTurno")) {
+			this.actualizarTiempoPorTurno(configParcial.tiempoPorTurno);
+		}
+
+		if (Object.prototype.hasOwnProperty.call(configParcial, "consumoAlimentoPorCiudadano")) {
+			const consumo = Number(configParcial.consumoAlimentoPorCiudadano);
+			if (!Number.isFinite(consumo) || consumo < 0) {
+				throw new Error("consumoAlimentoPorCiudadano debe ser un numero mayor o igual a 0");
+			}
+
+			this.#config.consumoAlimentoPorCiudadano = consumo;
+		}
+
+		if (Object.prototype.hasOwnProperty.call(configParcial, "overridesBeneficios")) {
+			this.actualizarOverridesBeneficios(configParcial.overridesBeneficios);
+		}
+	}
+
+	actualizarTiempoPorTurno(segundos) {
+		const nuevoTiempo = Number(segundos);
+		if (!Number.isFinite(nuevoTiempo) || nuevoTiempo <= 0) {
+			throw new Error("tiempoPorTurno debe ser un numero mayor a 0");
+		}
+
+		const estabaCorriendo = this.#intervalId !== null;
+		this.#juego.tiempoPorTurno = nuevoTiempo;
+
+		if (estabaCorriendo) {
+			clearInterval(this.#intervalId);
+			this.#intervalId = null;
+			this.iniciar();
+		}
+	}
+
+	actualizarOverridesBeneficios(overrides = {}) {
+		if (!overrides || typeof overrides !== "object") {
+			this.#overridesBeneficios = {};
+			return;
+		}
+
+		const permitidos = ["S1", "S2", "S3", "P1"];
+		const normalizado = {};
+
+		permitidos.forEach((subtipo) => {
+			if (!Object.prototype.hasOwnProperty.call(overrides, subtipo)) {
+				return;
+			}
+
+			const valor = Number(overrides[subtipo]);
+			if (!Number.isFinite(valor) || valor < 0) {
+				throw new Error(`El override de ${subtipo} debe ser un numero mayor o igual a 0`);
+			}
+
+			normalizado[subtipo] = valor;
+		});
+
+		this.#overridesBeneficios = normalizado;
 	}
 
 	reiniciar() {
@@ -205,7 +275,7 @@ export class controladorTurnos {
 
 	_procesarCelda(subtipo, totals, estadoRecursosInicio){
 		if(subtipo === "P1"){
-			totals.beneficioFelicidadTotal += 5;
+			totals.beneficioFelicidadTotal += this._obtenerBeneficioFelicidad(subtipo, null);
 			return;
 		}
 
@@ -224,9 +294,22 @@ export class controladorTurnos {
 
 		this._procesarProduccion(tipo, totals, factorOperacion);
 
-		if(tipo.beneficioFelicidad){
-			totals.beneficioFelicidadTotal += tipo.beneficioFelicidad * factorOperacion;
+		const beneficioFelicidad = this._obtenerBeneficioFelicidad(subtipo, tipo);
+		if(beneficioFelicidad > 0){
+			totals.beneficioFelicidadTotal += beneficioFelicidad * factorOperacion;
 		}
+	}
+
+	_obtenerBeneficioFelicidad(subtipo, tipo){
+		if (Object.prototype.hasOwnProperty.call(this.#overridesBeneficios, subtipo)) {
+			return this.#overridesBeneficios[subtipo];
+		}
+
+		if (subtipo === "P1") {
+			return 5;
+		}
+
+		return tipo?.beneficioFelicidad || 0;
 	}
 
 	_calcularFactorOperacion(subtipo, estadoRecursosInicio){

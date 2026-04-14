@@ -79,8 +79,8 @@ body{
     border: 2px solid #b4aaaa;
     border-radius: 5px;
     padding: 15px;
-    width: 250px;         
-    max-height: 40vh;     
+    width: min(90vw, 420px);
+    max-height: 75vh;
     color:white;
     
     overflow-y: auto; 
@@ -795,4 +795,25 @@ MOBILE (<= 768px)
         width: 80%;
     }
 
+}
+
+#container-config .config-form .form-label {
+    font-size: 0.85rem;
+}
+
+#container-config .config-form .form-control {
+    margin-bottom: 0.45rem;
+}
+
+#container-config .config-feedback {
+    min-height: 1.2rem;
+    font-size: 0.85rem;
+}
+
+#container-config .config-feedback.ok {
+    color: #d1ffe1;
+}
+
+#container-config .config-feedback.error {
+    color: #ffd2d2;
 }

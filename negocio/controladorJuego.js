@@ -41,6 +41,20 @@ const btnDemolerPanel = document.getElementById("btnDemolerPanel");
 const btnPausa = document.getElementById("pausado");
 const btnContinuar = document.getElementById("continuar");
 const btnReiniciar = document.getElementById("reiniciar");
+const btnAplicarConfig = document.getElementById("btnAplicarConfig");
+
+const inputTiempoPorTurno = document.getElementById("inputTiempoPorTurno");
+const inputConsumoAlimento = document.getElementById("inputConsumoAlimento");
+const inputMinCrecimiento = document.getElementById("inputMinCrecimiento");
+const inputMaxCrecimiento = document.getElementById("inputMaxCrecimiento");
+const inputBeneficioPolicia = document.getElementById("inputBeneficioPolicia");
+const inputBeneficioBomberos = document.getElementById("inputBeneficioBomberos");
+const inputBeneficioHospital = document.getElementById("inputBeneficioHospital");
+const inputBeneficioParque = document.getElementById("inputBeneficioParque");
+const inputElectricidadActual = document.getElementById("inputElectricidadActual");
+const inputAguaActual = document.getElementById("inputAguaActual");
+const inputAlimentoActual = document.getElementById("inputAlimentoActual");
+const configFeedback = document.getElementById("configFeedback");
 
 //grid | otros
 const mapaDiv = document.getElementById("mapa");
@@ -123,7 +137,25 @@ let sistemaCiudadanos;
 let sistemaPuntuacion;
 let edificioSeleccionado = { x: null, y: null };
 let atajosTecladoRegistrados = false;
+let eventosPausaRegistrados = false;
 const ciudadRepository = new CiudadRepository();
+
+const SIMULATION_CONFIG_DEFECTO = Object.freeze({
+    turnos: {
+        tiempoPorTurno: 10,
+        consumoAlimentoPorCiudadano: 1
+    },
+    ciudadanos: {
+        minCrecimiento: 1,
+        maxCrecimiento: 3
+    },
+    beneficios: {
+        S1: 10,
+        S2: 10,
+        S3: 10,
+        P1: 5
+    }
+});
 
 document.getElementById("btnExportar").addEventListener("click", exportarCiudadJSON);
 
@@ -232,18 +264,47 @@ btnDemolerPanel?.addEventListener("click", function(){
 
 mapaDiv?.addEventListener("click", manejarClickMapa);
 
+btnAplicarConfig?.addEventListener("click", () => {
+    const payload = leerFormularioConfig();
+    const validacion = validarFormularioConfig(payload);
+
+    if (!validacion.esValido) {
+        mostrarFeedbackConfig(validacion.mensaje, false);
+        return;
+    }
+
+    try {
+        aplicarConfiguracionEnCaliente(payload);
+        mostrarFeedbackConfig("Configuracion aplicada correctamente.", true);
+    } catch (error) {
+        mostrarFeedbackConfig(error.message || "No se pudo aplicar la configuracion", false);
+    }
+});
+
 
 function configurarEventosPausa() {
+    if (eventosPausaRegistrados) {
+        return;
+    }
+
+    eventosPausaRegistrados = true;
 
     btnPausa?.addEventListener("click", () => {
 
         if (!sistemaTurnos) return;
 
+        if (estaPausado()) {
+            return;
+        }
+
         sistemaTurnos.pausar();
+        sincronizarFormularioConfig();
         //agregar oscurecimiento a la pagina
-        const overlay = document.createElement("div");
-        overlay.classList.add("overlay-pausa");
-        document.body.appendChild(overlay);
+        if (!document.querySelector(".overlay-pausa")) {
+            const overlay = document.createElement("div");
+            overlay.classList.add("overlay-pausa");
+            document.body.appendChild(overlay);
+        }
 
         containerConfig.classList.add("activo");
         containerConfig.style.display = "block";
@@ -255,7 +316,7 @@ function configurarEventosPausa() {
 
         sistemaTurnos.reanudar();
         
-        document.querySelector(".overlay-pausa")?.remove();
+        document.querySelectorAll(".overlay-pausa").forEach((overlay) => overlay.remove());
         containerConfig.classList.remove("activo");
         containerConfig.style.display = "none";
     });
@@ -270,6 +331,7 @@ function configurarEventosPausa() {
 
         ciudadRepository.eliminarCiudadActual();
 
+        document.querySelectorAll(".overlay-pausa").forEach((overlay) => overlay.remove());
         containerConfig.style.display = "none";
         btnPausa.disabled = false;
 
@@ -394,6 +456,7 @@ async function iniciarJuego() {
 
     const economia = new Economia(data.economia);
     const ciudadanosPersistidos = Array.isArray(data.ciudadanos) ? data.ciudadanos : [];
+    const simulationConfig = normalizarSimulationConfig(data.simulationConfig);
 
     const ciudad = new Ciudad({
         id: data.idCiudad,
@@ -404,8 +467,14 @@ async function iniciarJuego() {
         economia,
         ciudadanos: ciudadanosPersistidos
     });
+    ciudad.simulationConfig = simulationConfig;
 
-    juego = new Juego({ ciudad, turnoActual: data.turnoActual ?? 0, puntuacionAcumulada: data.puntuacionAcumulada ?? 0});
+    juego = new Juego({
+        ciudad,
+        tiempoPorTurno: simulationConfig.turnos.tiempoPorTurno,
+        turnoActual: data.turnoActual ?? 0,
+        puntuacionAcumulada: data.puntuacionAcumulada ?? 0
+    });
     rehidratarAsignacionesCiudadanos(ciudadanosPersistidos, juego.ciudad, mapa.celdas);
     nombreCiudadTitulo.textContent = juego.ciudad.nombre;
     //clima
@@ -423,7 +492,7 @@ async function iniciarJuego() {
         cargarActualizarNoticias();
     }, 1800000);
 
-    sistemaCiudadanos = new controladorCiudadanos(juego);
+    sistemaCiudadanos = new controladorCiudadanos(juego, simulationConfig.ciudadanos);
     renderizarCiudad();
 
     Rutas.setJuego(juego);
@@ -449,11 +518,17 @@ async function iniciarJuego() {
             guardarCiudad();
             renderizarCiudad();
         }
+        ,
+        {
+            consumoAlimentoPorCiudadano: simulationConfig.turnos.consumoAlimentoPorCiudadano,
+            overridesBeneficios: simulationConfig.beneficios
+        }
     );
 
     sistemaTurnos.iniciar();
     configurarEventosPausa();
     configurarAtajosTeclado();
+    sincronizarFormularioConfig();
 }
 
 function manejarClickMapa(e){
@@ -825,14 +900,18 @@ function obtenerTipoPorSubtipo(subtipo){
 }
 
 function actualizarRecursos(juego){
-    sistemaCiudadanos = new controladorCiudadanos(juego);
     let {ciudadanos} = juego.ciudad;
     puntaje.textContent = `${juego.puntuacionAcumulada}`; //OJO
     dinero.textContent = `${juego.ciudad.economia.dinero}`;
     totalAgua.textContent = `${juego.ciudad.economia.agua}`;
     totalElectricidad.textContent = `${juego.ciudad.economia.electricidad}`;
     totalAlimento.textContent = `${juego.ciudad.economia.alimento}`;
-    promedioFelicidad.textContent = `${sistemaCiudadanos.obtenerFelicidadPromedio(ciudadanos)}`;
+
+    if (sistemaCiudadanos && typeof sistemaCiudadanos.obtenerFelicidadPromedio === "function") {
+        promedioFelicidad.textContent = `${sistemaCiudadanos.obtenerFelicidadPromedio(ciudadanos)}`;
+    } else {
+        promedioFelicidad.textContent = "0";
+    }
 }
 
 function actualizarPuntuacion(scr){
@@ -1053,6 +1132,7 @@ function guardarCiudad(options = {}){
         region: juego.ciudad.region,
         mapa: juego.ciudad.mapa.toJSON(),
         economia: juego.ciudad.economia.toJSON(),
+        simulationConfig: normalizarSimulationConfig(juego.ciudad.simulationConfig),
         ciudadanos: juego.ciudad.ciudadanos,
         poblacion: juego.ciudad.ciudadanos.length,
         puntuacionAcumulada: juego.puntuacionAcumulada, //para poder obtener el ranking
@@ -1341,4 +1421,260 @@ function gameOver() {
         ciudadRepository.eliminarCiudadActual();
         window.location.href = "../vistas/formularioCiudad.html";
     }, 5500);
+}
+
+function leerFormularioConfig() {
+    return {
+        tiempoPorTurno: Number(inputTiempoPorTurno?.value),
+        consumoAlimentoPorCiudadano: Number(inputConsumoAlimento?.value),
+        minCrecimiento: Number(inputMinCrecimiento?.value),
+        maxCrecimiento: Number(inputMaxCrecimiento?.value),
+        beneficioPolicia: Number(inputBeneficioPolicia?.value),
+        beneficioBomberos: Number(inputBeneficioBomberos?.value),
+        beneficioHospital: Number(inputBeneficioHospital?.value),
+        beneficioParque: Number(inputBeneficioParque?.value),
+        electricidadActual: Number(inputElectricidadActual?.value),
+        aguaActual: Number(inputAguaActual?.value),
+        alimentoActual: Number(inputAlimentoActual?.value)
+    };
+}
+
+function validarFormularioConfig(payload) {
+    const esNumeroFinito = (valor) => Number.isFinite(valor);
+    const esEntero = (valor) => Number.isInteger(valor);
+
+    if (!esNumeroFinito(payload.tiempoPorTurno) || payload.tiempoPorTurno <= 0) {
+        return {
+            esValido: false,
+            mensaje: "Tiempo por turno invalido: debe ser un numero mayor a 0"
+        };
+    }
+
+    if (!esNumeroFinito(payload.minCrecimiento) || !esNumeroFinito(payload.maxCrecimiento)) {
+        return {
+            esValido: false,
+            mensaje: "Min y max crecimiento deben ser valores numericos"
+        };
+    }
+
+    if (!esEntero(payload.minCrecimiento) || !esEntero(payload.maxCrecimiento)) {
+        return {
+            esValido: false,
+            mensaje: "Min y max crecimiento deben ser enteros"
+        };
+    }
+
+    if (payload.minCrecimiento > payload.maxCrecimiento) {
+        return {
+            esValido: false,
+            mensaje: "Min crecimiento no puede ser mayor que max crecimiento"
+        };
+    }
+
+    const camposNoNegativos = [
+        { key: "consumoAlimentoPorCiudadano", label: "Consumo de alimento" },
+        { key: "beneficioPolicia", label: "Beneficio policia" },
+        { key: "beneficioBomberos", label: "Beneficio bomberos" },
+        { key: "beneficioHospital", label: "Beneficio hospital" },
+        { key: "beneficioParque", label: "Beneficio parque" }
+    ];
+
+    for (const campo of camposNoNegativos) {
+        const valor = payload[campo.key];
+        if (!esNumeroFinito(valor) || valor < 0) {
+            return {
+                esValido: false,
+                mensaje: `${campo.label} debe ser un numero mayor o igual a 0`
+            };
+        }
+    }
+
+    const recursos = [
+        { key: "electricidadActual", label: "Electricidad actual" },
+        { key: "aguaActual", label: "Agua actual" },
+        { key: "alimentoActual", label: "Alimento actual" }
+    ];
+
+    for (const recurso of recursos) {
+        const valor = payload[recurso.key];
+        if (!esNumeroFinito(valor)) {
+            return {
+                esValido: false,
+                mensaje: `${recurso.label} debe ser un valor numerico`
+            };
+        }
+    }
+
+    return {
+        esValido: true,
+        mensaje: "OK"
+    };
+}
+
+function mostrarFeedbackConfig(mensaje, esOk) {
+    if (!configFeedback) return;
+
+    configFeedback.textContent = mensaje;
+    configFeedback.classList.remove("ok", "error");
+    configFeedback.classList.add(esOk ? "ok" : "error");
+}
+
+function aplicarConfiguracionEnCaliente(payload) {
+    if (!juego || !sistemaTurnos || !sistemaCiudadanos) {
+        throw new Error("La simulacion aun no esta lista para aplicar cambios");
+    }
+
+    sistemaTurnos.actualizarConfiguracion({
+        tiempoPorTurno: payload.tiempoPorTurno,
+        consumoAlimentoPorCiudadano: payload.consumoAlimentoPorCiudadano
+    });
+
+    sistemaTurnos.actualizarOverridesBeneficios({
+        S1: payload.beneficioPolicia,
+        S2: payload.beneficioBomberos,
+        S3: payload.beneficioHospital,
+        P1: payload.beneficioParque
+    });
+
+    sistemaCiudadanos.actualizarConfiguracion({
+        minCrecimiento: payload.minCrecimiento,
+        maxCrecimiento: payload.maxCrecimiento
+    });
+
+    juego.ciudad.economia.electricidad = payload.electricidadActual;
+    juego.ciudad.economia.agua = payload.aguaActual;
+    juego.ciudad.economia.alimento = payload.alimentoActual;
+
+    juego.ciudad.simulationConfig = normalizarSimulationConfig({
+        turnos: {
+            tiempoPorTurno: payload.tiempoPorTurno,
+            consumoAlimentoPorCiudadano: payload.consumoAlimentoPorCiudadano
+        },
+        ciudadanos: {
+            minCrecimiento: payload.minCrecimiento,
+            maxCrecimiento: payload.maxCrecimiento
+        },
+        beneficios: {
+            S1: payload.beneficioPolicia,
+            S2: payload.beneficioBomberos,
+            S3: payload.beneficioHospital,
+            P1: payload.beneficioParque
+        }
+    });
+
+    actualizarRecursos(juego);
+    renderizarCiudad();
+    guardarCiudad();
+}
+
+function sincronizarFormularioConfig() {
+    if (!juego?.ciudad?.economia) {
+        return;
+    }
+
+    if (inputTiempoPorTurno) {
+        inputTiempoPorTurno.value = `${juego.tiempoPorTurno}`;
+    }
+
+    const simulationConfig = normalizarSimulationConfig(juego.ciudad.simulationConfig);
+
+    if (inputConsumoAlimento) {
+        inputConsumoAlimento.value = `${simulationConfig.turnos.consumoAlimentoPorCiudadano}`;
+    }
+
+    if (inputMinCrecimiento) {
+        inputMinCrecimiento.value = `${simulationConfig.ciudadanos.minCrecimiento}`;
+    }
+
+    if (inputMaxCrecimiento) {
+        inputMaxCrecimiento.value = `${simulationConfig.ciudadanos.maxCrecimiento}`;
+    }
+
+    if (inputBeneficioPolicia) {
+        inputBeneficioPolicia.value = `${simulationConfig.beneficios.S1}`;
+    }
+
+    if (inputBeneficioBomberos) {
+        inputBeneficioBomberos.value = `${simulationConfig.beneficios.S2}`;
+    }
+
+    if (inputBeneficioHospital) {
+        inputBeneficioHospital.value = `${simulationConfig.beneficios.S3}`;
+    }
+
+    if (inputBeneficioParque) {
+        inputBeneficioParque.value = `${simulationConfig.beneficios.P1}`;
+    }
+
+    if (inputElectricidadActual) {
+        inputElectricidadActual.value = `${juego.ciudad.economia.electricidad}`;
+    }
+
+    if (inputAguaActual) {
+        inputAguaActual.value = `${juego.ciudad.economia.agua}`;
+    }
+
+    if (inputAlimentoActual) {
+        inputAlimentoActual.value = `${juego.ciudad.economia.alimento}`;
+    }
+}
+
+function normalizarSimulationConfig(configRaw) {
+    const turnosRaw = configRaw?.turnos ?? {};
+    const ciudadanosRaw = configRaw?.ciudadanos ?? {};
+    const beneficiosRaw = configRaw?.beneficios ?? {};
+
+    const minCrecimiento = Math.max(0, Math.trunc(Number(ciudadanosRaw.minCrecimiento ?? SIMULATION_CONFIG_DEFECTO.ciudadanos.minCrecimiento)));
+    let maxCrecimiento = Math.max(0, Math.trunc(Number(ciudadanosRaw.maxCrecimiento ?? SIMULATION_CONFIG_DEFECTO.ciudadanos.maxCrecimiento)));
+
+    if (!Number.isFinite(minCrecimiento)) {
+        return {
+            turnos: { ...SIMULATION_CONFIG_DEFECTO.turnos },
+            ciudadanos: { ...SIMULATION_CONFIG_DEFECTO.ciudadanos },
+            beneficios: { ...SIMULATION_CONFIG_DEFECTO.beneficios }
+        };
+    }
+
+    if (!Number.isFinite(maxCrecimiento)) {
+        maxCrecimiento = Math.max(minCrecimiento, SIMULATION_CONFIG_DEFECTO.ciudadanos.maxCrecimiento);
+    }
+
+    if (maxCrecimiento < minCrecimiento) {
+        maxCrecimiento = minCrecimiento;
+    }
+
+    const tiempoPorTurno = Number(turnosRaw.tiempoPorTurno ?? SIMULATION_CONFIG_DEFECTO.turnos.tiempoPorTurno);
+    const consumoAlimentoPorCiudadano = Number(
+        turnosRaw.consumoAlimentoPorCiudadano ?? SIMULATION_CONFIG_DEFECTO.turnos.consumoAlimentoPorCiudadano
+    );
+
+    return {
+        turnos: {
+            tiempoPorTurno: Number.isFinite(tiempoPorTurno) && tiempoPorTurno > 0
+                ? tiempoPorTurno
+                : SIMULATION_CONFIG_DEFECTO.turnos.tiempoPorTurno,
+            consumoAlimentoPorCiudadano: Number.isFinite(consumoAlimentoPorCiudadano) && consumoAlimentoPorCiudadano >= 0
+                ? consumoAlimentoPorCiudadano
+                : SIMULATION_CONFIG_DEFECTO.turnos.consumoAlimentoPorCiudadano
+        },
+        ciudadanos: {
+            minCrecimiento,
+            maxCrecimiento
+        },
+        beneficios: {
+            S1: normalizarBeneficio(beneficiosRaw.S1, SIMULATION_CONFIG_DEFECTO.beneficios.S1),
+            S2: normalizarBeneficio(beneficiosRaw.S2, SIMULATION_CONFIG_DEFECTO.beneficios.S2),
+            S3: normalizarBeneficio(beneficiosRaw.S3, SIMULATION_CONFIG_DEFECTO.beneficios.S3),
+            P1: normalizarBeneficio(beneficiosRaw.P1, SIMULATION_CONFIG_DEFECTO.beneficios.P1)
+        }
+    };
+}
+
+function normalizarBeneficio(valor, fallback) {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero) || numero < 0) {
+        return fallback;
+    }
+
+    return numero;
 }

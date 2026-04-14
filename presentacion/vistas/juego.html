@@ -31,6 +31,46 @@
             <!-- panel oculto que se activa al darle al boton pausar -->
             <div id="container-config" class="oculto">
                 <h3> Deseas continuar o Eliminar? </h3>
+                <div class="config-form mt-2">
+                    <h6 class="mb-2">Configuracion de simulacion</h6>
+
+                    <label for="inputTiempoPorTurno" class="form-label mb-1">Tiempo por turno (segundos)</label>
+                    <input id="inputTiempoPorTurno" type="number" class="form-control form-control-sm mb-2" min="0.1" step="0.1" value="10">
+
+                    <label for="inputConsumoAlimento" class="form-label mb-1">Consumo alimento por ciudadano</label>
+                    <input id="inputConsumoAlimento" type="number" class="form-control form-control-sm mb-2" min="0" step="0.1" value="1">
+
+                    <label for="inputMinCrecimiento" class="form-label mb-1">Min crecimiento ciudadanos</label>
+                    <input id="inputMinCrecimiento" type="number" class="form-control form-control-sm mb-2" min="0" step="1" value="1">
+
+                    <label for="inputMaxCrecimiento" class="form-label mb-1">Max crecimiento ciudadanos</label>
+                    <input id="inputMaxCrecimiento" type="number" class="form-control form-control-sm mb-2" min="0" step="1" value="3">
+
+                    <label for="inputBeneficioPolicia" class="form-label mb-1">Beneficio policia</label>
+                    <input id="inputBeneficioPolicia" type="number" class="form-control form-control-sm mb-2" min="0" step="1" value="10">
+
+                    <label for="inputBeneficioBomberos" class="form-label mb-1">Beneficio bomberos</label>
+                    <input id="inputBeneficioBomberos" type="number" class="form-control form-control-sm mb-2" min="0" step="1" value="10">
+
+                    <label for="inputBeneficioHospital" class="form-label mb-1">Beneficio hospital</label>
+                    <input id="inputBeneficioHospital" type="number" class="form-control form-control-sm mb-2" min="0" step="1" value="10">
+
+                    <label for="inputBeneficioParque" class="form-label mb-1">Beneficio parque</label>
+                    <input id="inputBeneficioParque" type="number" class="form-control form-control-sm mb-2" min="0" step="1" value="5">
+
+                    <label for="inputElectricidadActual" class="form-label mb-1">Electricidad actual</label>
+                    <input id="inputElectricidadActual" type="number" class="form-control form-control-sm mb-2" step="1" value="0">
+
+                    <label for="inputAguaActual" class="form-label mb-1">Agua actual</label>
+                    <input id="inputAguaActual" type="number" class="form-control form-control-sm mb-2" step="1" value="0">
+
+                    <label for="inputAlimentoActual" class="form-label mb-1">Alimento actual</label>
+                    <input id="inputAlimentoActual" type="number" class="form-control form-control-sm mb-2" step="1" value="0">
+
+                    <button id="btnAplicarConfig" type="button" class="btn btn-warning btn-sm w-100 mt-1">Aplicar configuracion</button>
+                    <p id="configFeedback" class="config-feedback mt-2 mb-0" aria-live="polite"></p>
+                </div>
+
                 <button id="continuar" type="button" class="btn btn-secondary">▶ Reanudar</button>
                 <button id="reiniciar" type="button" class="btn btn-secondary">Eliminar Ciudad Actual</button>
             </div>
